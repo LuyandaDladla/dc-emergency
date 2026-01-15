@@ -2,6 +2,40 @@ import express from "express";
 
 const app = express();
 
+
+const normalizeOrigin = (u) => {
+  if (!u || typeof u !== "string") return "";
+  return u.trim().replace(/\/+$/, "");
+};
+
+const allowed = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // Non-browser requests (curl, server-to-server)
+    if (!origin) return cb(null, true);
+
+    const o = normalizeOrigin(origin);
+
+    // If env not set, allow all (safe for now)
+    if (allowed.length === 0) return cb(null, true);
+
+    // Exact match
+    if (allowed.includes(o)) return cb(null, true);
+
+    // Allow any Vercel preview domains for this app
+    if (o.endsWith(".vercel.app")) return cb(null, true);
+
+    // IMPORTANT: never throw hard errors that cause 500 + missing headers
+    return cb(null, false);
+  },
+  credentials: true
+}));
+
+app.options("*", cors());
 import cors from "cors";
 
 
@@ -14,12 +48,7 @@ const allowedOrigins = (process.env.CLIENT_ORIGIN || "")
     .map(s => s.trim())
     .filter(Boolean);
 
-app.use(cors({
-    origin: (origin, cb) => {
-        if (!origin) return cb(null, true);
-        if (allowedOrigins.length === 0) return cb(null, true);
-        if (allowedOrigins.includes(origin)) return cb(null, true);
-        return cb(new Error("CORS blocked: " + origin));
+
     },
     credentials: true
 }));
@@ -29,17 +58,7 @@ app.options("*", cors());
 
 
 
-app.use(cors({
-  origin: function(origin, cb) {
 
-    if (!origin) return cb(null, true);
-
-    if (allowedOrigins.length === 0) return cb(null, true);
-
-    // Exact match
-    if (allowedOrigins.includes(origin)) return cb(null, true);
-
-    return cb(new Error("Not allowed by CORS: " + origin));
   },
   credentials: true
 }));
