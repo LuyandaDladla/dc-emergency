@@ -1,9 +1,8 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
-import { getMe, updateMe } from "../controllers/usersController.js";
-
 const router = express.Router();
-router.get("/me", protect, getMe);
-router.put("/me", protect, updateMe);
+
+router.get("/me", (req, res) => {
+  res.json({ ok: true, user: { id: "demo", name: "Demo User", province: "Gauteng", avatarUrl: "" } });
+});
 
 export default router;

@@ -1,12 +1,13 @@
-﻿import express from "express";
-import { register, login, me, addContact } from "../controllers/authController.js";
-import { protect } from "../middleware/authMiddleware.js";
-
+import express from "express";
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.get("/me", protect, me);
-router.post("/contacts", protect, addContact);
+// Minimal demo auth (replace with real JWT later)
+router.post("/login", (req, res) => {
+  res.json({ ok: true, token: "demo-token", user: { id: "demo", name: "Demo User", isAdmin: false } });
+});
+
+router.post("/register", (req, res) => {
+  res.json({ ok: true, token: "demo-token", user: { id: "demo", name: "Demo User", isAdmin: false } });
+});
 
 export default router;

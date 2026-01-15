@@ -1,10 +1,17 @@
 import express from "express";
-import { sendMessage, history, adminCounts } from "../controllers/therapistController.js";
-import { protect, adminOnly } from "../middleware/authMiddleware.js";
-
 const router = express.Router();
-router.get("/history", protect, history);
-router.post("/message", protect, sendMessage);
-router.get("/admin/counts", protect, adminOnly, adminCounts);
+
+router.get("/history", (req, res) => {
+  res.json({ ok: true, messages: [] });
+});
+
+router.post("/message", (req, res) => {
+  const text = (req.body && req.body.text) ? req.body.text : "";
+  res.json({
+    ok: true,
+    reply: "I hear you. You are not alone. If you are in immediate danger, use SOS now.",
+    echo: text
+  });
+});
 
 export default router;
