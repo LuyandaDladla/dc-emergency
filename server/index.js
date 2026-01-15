@@ -2,17 +2,38 @@ import express from "express";
 
 const app = express();
 
+import cors from "cors";
+
+
+// Parse JSON
+app.use(express.json());
+
+// CORS (bulletproof)
 const allowedOrigins = (process.env.CLIENT_ORIGIN || "")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+app.use(cors({
+    origin: (origin, cb) => {
+        if (!origin) return cb(null, true);
+        if (allowedOrigins.length === 0) return cb(null, true);
+        if (allowedOrigins.includes(origin)) return cb(null, true);
+        return cb(new Error("CORS blocked: " + origin));
+    },
+    credentials: true
+}));
+
+// IMPORTANT: handle preflight requests
+app.options("*", cors());
+
+
 
 app.use(cors({
   origin: function(origin, cb) {
-    // allow server-to-server / curl / same-origin
+
     if (!origin) return cb(null, true);
 
-    // If no env set, allow all (dev-friendly)
     if (allowedOrigins.length === 0) return cb(null, true);
 
     // Exact match
