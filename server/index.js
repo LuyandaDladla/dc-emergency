@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import communityRoutes from "./routes/community.js";
+
 
 import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
-import communityRoutes from "./routes/community.js";
 import riskRoutes from "./routes/risk.js";
 import therapistRoutes from "./routes/therapist.js";
 import analyticsRoutes from "./routes/analytics.js";
@@ -17,6 +18,7 @@ const app = express();
 
 /* -------------------- CORE MIDDLEWARE -------------------- */
 app.use(express.json());
+app.use("/api/community", communityRoutes);
 
 app.use(
   cors({
