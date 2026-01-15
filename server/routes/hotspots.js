@@ -1,26 +1,14 @@
 import express from "express";
 const router = express.Router();
 
-// Stories feed (national/province)
-router.get("/stories", (req, res) => {
-  res.json({
-    ok: true,
-    stories: [
-      { id: "s1", title: "Safety update", province: "Gauteng", createdAt: new Date().toISOString() },
-      { id: "s2", title: "Community alert", province: "Limpopo", createdAt: new Date().toISOString() }
-    ]
-  });
+// Temporary safe defaults (replace with real data later)
+router.get("/", (req, res) => {
+  const province = (req.query.province || "National").toString();
+  res.json({ ok:true, province, hotspots: [] });
 });
 
-router.get("/province/:province", (req, res) => {
-  res.json({
-    ok: true,
-    province: req.params.province,
-    hotspots: [
-      { id: "h1", name: "Hotspot A", level: "medium" },
-      { id: "h2", name: "Hotspot B", level: "high" }
-    ]
-  });
+router.get("/stories", (req, res) => {
+  res.json({ ok:true, stories: [] });
 });
 
 export default router;

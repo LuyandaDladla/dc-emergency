@@ -1,39 +1,18 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, default: "" },
-    email: { type: String, required: true, unique: true, lowercase: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    isAdmin: { type: Boolean, default: false },
-
     province: { type: String, default: "Gauteng" },
-
-    // Profile picture URL (fastest deploy option)
     avatarUrl: { type: String, default: "" },
-
-    // Emergency contacts (future UI will manage these)
     emergencyContacts: [
-      {
-        name: { type: String, default: "" },
-        phone: { type: String, default: "" },
-        relationship: { type: String, default: "" }
-      }
-    ]
+      { name: { type: String }, phone: { type: String } }
+    ],
+    isAdmin: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
-
-userSchema.pre("save", async function(next){
-  if(!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-userSchema.methods.matchPassword = async function(entered){
-  return bcrypt.compare(entered, this.password);
-};
 
 export default mongoose.model("User", userSchema);

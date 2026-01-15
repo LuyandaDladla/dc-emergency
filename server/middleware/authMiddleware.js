@@ -1,24 +1,23 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-export async function protect(req,res,next){
-  let token;
-  if(req.headers.authorization && req.headers.authorization.startsWith("Bearer ")){
-    token = req.headers.authorization.split(" ")[1];
-  }
-  if(!token) return res.status(401).json({ message:"Not authorized, no token" });
+export const protect = async (req, res, next) => {
+  try {
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    if (!token) return res.status(401).json({ ok: false, error: "No token" });
 
-  try{
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select("-password");
-    if(!req.user) return res.status(401).json({ message:"Not authorized" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) return res.status(401).json({ ok: false, error: "User not found" });
+    req.user = user;
     next();
-  }catch(e){
-    return res.status(401).json({ message:"Not authorized, token invalid" });
+  } catch (e) {
+    return res.status(401).json({ ok: false, error: "Invalid token" });
   }
-}
+};
 
-export function adminOnly(req,res,next){
-  if(req.user && req.user.isAdmin) return next();
-  return res.status(403).json({ message:"Admin only" });
-}
+export const adminOnly = (req, res, next) => {
+  if (req.user && req.user.isAdmin) return next();
+  return res.status(403).json({ ok: false, error: "Admin only" });
+};

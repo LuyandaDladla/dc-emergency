@@ -6,7 +6,7 @@ const RiskSchema = new mongoose.Schema(
     province: { type: String, default: "" },
     score: { type: Number, default: 0 },
     answers: { type: Object, default: {} },
-    flags: { type: [String], default: [] },
+    flags: { type: [String], default: [] }
   },
   { timestamps: true }
 );
