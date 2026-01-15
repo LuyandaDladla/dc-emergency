@@ -21,7 +21,6 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.get("/health",(req,res)=>res.json({ok:true}));
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", time: new Date().toISOString() });
@@ -43,4 +42,8 @@ app.use("/api/provinces", provincesRoutes);
 const PORT = process.env.PORT || 5000;
 
 await connectDB(process.env.MONGO_URI);
+app.get("/health", (req, res) => {
+    res.status(200).json({ ok: true, status: "healthy" });
+});
+
 app.listen(PORT, () => console.log("Server running on port " + PORT));
