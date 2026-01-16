@@ -29,11 +29,7 @@ import analyticsRoutes from "./routes/analytics.js";
 
 
 import hotspotsRoutes from "./routes/hotspots.js";
-
-
 import sosRoutes from "./routes/sos.js";
-
-
 dotenv.config();
 
 
