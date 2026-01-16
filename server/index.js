@@ -1,16 +1,38 @@
 import express from "express";
+
+import sosRoutes from "./routes/sos.js";
 import cors from "cors";
+
+import sosRoutes from "./routes/sos.js";
 import dotenv from "dotenv";
+
+import sosRoutes from "./routes/sos.js";
 import connectDB from "./config/db.js";
 
+
+import sosRoutes from "./routes/sos.js";
 import authRoutes from "./routes/auth.js";
+
+import sosRoutes from "./routes/sos.js";
 import userRoutes from "./routes/users.js";
+
+import sosRoutes from "./routes/sos.js";
 import communityRoutes from "./routes/community.js";
+
+import sosRoutes from "./routes/sos.js";
 import riskRoutes from "./routes/risk.js";
+
+import sosRoutes from "./routes/sos.js";
 import therapistRoutes from "./routes/therapist.js";
+
+import sosRoutes from "./routes/sos.js";
 import analyticsRoutes from "./routes/analytics.js";
+
+import sosRoutes from "./routes/sos.js";
 import hotspotsRoutes from "./routes/hotspots.js";
 
+
+import sosRoutes from "./routes/sos.js";
 dotenv.config();
 
 const app = express();
@@ -45,12 +67,26 @@ connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
+
+app.use("/api/sos", sosRoutes);
 app.use("/api/users", userRoutes);
+
+app.use("/api/sos", sosRoutes);
 app.use("/api/community", communityRoutes);
+
+app.use("/api/sos", sosRoutes);
 app.use("/api/risk", riskRoutes);
+
+app.use("/api/sos", sosRoutes);
 app.use("/api/therapist", therapistRoutes);
+
+app.use("/api/sos", sosRoutes);
 app.use("/api/analytics", analyticsRoutes);
+
+app.use("/api/sos", sosRoutes);
 app.use("/api/hotspots", hotspotsRoutes);
 
+
+app.use("/api/sos", sosRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, ()=>console.log("Server running on port", PORT));
