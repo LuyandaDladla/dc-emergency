@@ -42,7 +42,15 @@ dotenv.config();
 
 const app = express();
 
+
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ ok: true, status: "healthy" });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ ok: true, status: "healthy" });
+});
 app.use(express.json());
 
 
