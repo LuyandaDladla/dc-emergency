@@ -5,7 +5,9 @@ import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET /api/users/me  (protected)
+/**
+ * GET /api/users/me  (protected)
+ */
 router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -16,7 +18,9 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
-// POST /api/users/register
+/**
+ * POST /api/users/register
+ */
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body || {};
@@ -39,7 +43,9 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// POST /api/users/login
+/**
+ * POST /api/users/login
+ */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body || {};
