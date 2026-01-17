@@ -6,3 +6,10 @@ build
 .DS_Store
 .vscode
 *.log
+# local scripts/logs/secrets
+*.ps1
+*.log
+dc_token.txt
+client-dev-log.txt
+.env
+.env.*
