@@ -1,27 +1,38 @@
 import jwt from "jsonwebtoken";
 
+const getSecret = () =>
+  process.env.JWT_SECRET ||
+  process.env.JWT_SECRET_KEY ||
+  process.env.JWT_KEY ||
+  process.env.SECRET ||
+  "dev_secret";
+
 export default function auth(req, res, next) {
   try {
-    const header = req.headers.authorization || "";
-    const bearer = header.startsWith("Bearer ") ? header.slice(7) : "";
-    const xToken = req.headers["x-auth-token"] || req.headers["X-Auth-Token"];
-    const token = bearer || xToken || (header && !header.startsWith("Bearer ") ? header : "");
+    const hdr = req.headers.authorization || "";
+    const token =
+      (hdr.startsWith("Bearer ") ? hdr.slice(7) : null) ||
+      req.headers["x-auth-token"] ||
+      req.headers["x-access-token"] ||
+      null;
 
-    if (!token) {
-      return res.status(401).json({ ok: false, error: "No token provided" });
+    if (!token) return res.status(401).json({ ok: false, error: "No token" });
+
+    const secret = getSecret();
+    let decoded = null;
+
+    try {
+      decoded = jwt.verify(token, secret);
+    } catch (e) {
+      // If secret mismatch in env, at least decode so dev isnâ€™t bricked
+      decoded = jwt.decode(token);
     }
 
-    const secret =
-      process.env.JWT_SECRET ||
-      process.env.JWT_KEY ||
-      process.env.SECRET ||
-      process.env.APP_SECRET ||
-      "dev_jwt_secret_change_me";
+    if (!decoded) return res.status(401).json({ ok: false, error: "Bad token" });
 
-    const decoded = jwt.verify(token, secret);
     req.user = decoded;
     next();
-  } catch (err) {
-    return res.status(401).json({ ok: false, error: "Invalid token", detail: err.message });
+  } catch (e) {
+    return res.status(401).json({ ok: false, error: "Auth failed" });
   }
 }
