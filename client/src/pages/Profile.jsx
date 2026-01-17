@@ -1,120 +1,122 @@
-import { useEffect, useState } from "react";
-import { api, setToken } from "../services/api.js";
-import Avatar from "../components/Avatar.jsx";
+import React, { useEffect, useState } from "react";
+import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
-export default function Profile(){
-  const [email,setEmail]=useState("");
-  const [password,setPassword]=useState("");
-  const [msg,setMsg]=useState("");
+function loadContacts() {
+  try {
+    const raw = localStorage.getItem("dc_contacts");
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+function saveContacts(list) {
+  localStorage.setItem("dc_contacts", JSON.stringify(list));
+}
 
-  const [me,setMe]=useState(null);
-  const [name,setName]=useState("");
-  const [avatarUrl,setAvatarUrl]=useState("");
-  const [province,setProvince]=useState(localStorage.getItem("province") || "Gauteng");
+export default function Profile() {
+  const { user, refreshMe } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
+  const [contacts, setContacts] = useState(loadContacts());
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const token = localStorage.getItem("token");
+  useEffect(() => {
+    setAvatarUrl(user?.avatarUrl || "");
+  }, [user?.avatarUrl]);
 
-  const loadMe = async ()=>{
-    try{
-      const r = await api.get("/users/me");
-      setMe(r.data.user);
-      setName(r.data.user.name || "");
-      setAvatarUrl(r.data.user.avatarUrl || "");
-      setProvince(r.data.user.province || province);
-    }catch{
-      setMe(null);
-    }
+  const add = () => {
+    if (!name.trim() || !phone.trim()) return;
+    const next = [...contacts, { name: name.trim(), phone: phone.trim() }];
+    setContacts(next);
+    saveContacts(next);
+    setName("");
+    setPhone("");
   };
 
-  useEffect(()=>{
-    if(token) loadMe();
-  },[token]);
-
-  const login = async ()=>{
-    setMsg("Logging in...");
-    try{
-      const r = await api.post("/auth/login", { email, password });
-      setToken(r.data.token);
-      setMsg("Logged in.");
-      window.location.reload();
-    }catch(e){
-      setMsg("Login failed: " + (e.response?.data?.message || e.message));
-    }
+  const remove = (idx) => {
+    const next = contacts.filter((_, i) => i !== idx);
+    setContacts(next);
+    saveContacts(next);
   };
 
-  const logout = ()=>{
-    setToken(null);
-    window.location.reload();
-  };
-
-  const saveProfile = async ()=>{
-    setMsg("Saving...");
-    try{
-      await api.put("/users/me", { name, avatarUrl, province });
-      localStorage.setItem("province", province);
-      setMsg("Saved.");
-      await loadMe();
-    }catch(e){
-      setMsg("Save failed: " + (e.response?.data?.message || e.message));
+  const saveAvatar = async () => {
+    try {
+      await api.post("/users/avatar", { avatarUrl });
+      await refreshMe();
+      alert("Saved profile picture.");
+    } catch {
+      alert("Could not save avatar (backend endpoint may not exist yet).");
     }
   };
 
   return (
-    <div className="stack">
-      <div className="card">
-        <div className="h1">Profile</div>
-        <div className="small">Account + emergency settings.</div>
-        <div className="hr"></div>
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5 flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-white/10 overflow-hidden flex items-center justify-center">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+          ) : (
+            <span className="font-bold">DC</span>
+          )}
+        </div>
+        <div>
+          <div className="text-lg font-semibold">{user?.name || "Profile"}</div>
+          <div className="text-sm text-white/60">{user?.email || ""}</div>
+        </div>
+      </div>
 
-        {!token ? (
-          <>
-            <input className="input" placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} />
-            <div style={{ height: 10 }}></div>
-            <input className="input" placeholder="Password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} />
-            <div style={{ height: 10 }}></div>
-            <button className="btn btnPrimary" onClick={login}>Login</button>
-            <div className="small" style={{ marginTop: 10 }}>{msg}</div>
-          </>
-        ) : (
-          <>
-            <div className="row" style={{ gap: 12 }}>
-              <Avatar url={me?.avatarUrl} name={me?.name || me?.email || "User"} />
-              <div className="stack" style={{ gap: 6, width:"100%" }}>
-                <div className="badge">Logged in</div>
-                <div className="small">{me?.email}</div>
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-3">
+        <div className="font-semibold">Profile Picture</div>
+        <div className="text-sm text-white/60">Paste an image URL (weâ€™ll add upload later).</div>
+        <div className="flex gap-2">
+          <input
+            value={avatarUrl}
+            onChange={(e) => setAvatarUrl(e.target.value)}
+            placeholder="https://..."
+            className="flex-1 bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm"
+          />
+          <button onClick={saveAvatar} className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 hover:bg-white/15">
+            Save
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-3">
+        <div className="font-semibold">Emergency Contacts</div>
+        <div className="grid md:grid-cols-2 gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name"
+            className="bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm"
+          />
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone (+27...)"
+            className="bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm"
+          />
+        </div>
+        <button onClick={add} className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/10 hover:bg-white/15">
+          Add Contact
+        </button>
+
+        <div className="mt-2 space-y-2">
+          {contacts.length === 0 && <div className="text-sm text-white/50">No contacts yet.</div>}
+          {contacts.map((c, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+              <div>
+                <div className="font-semibold">{c.name}</div>
+                <div className="text-sm text-white/60">{c.phone}</div>
               </div>
-              <div className="space"></div>
-              <button className="btn" onClick={logout}>Logout</button>
+              <button onClick={() => remove(i)} className="px-3 py-2 rounded-xl bg-white/10 border border-white/10 hover:bg-white/15 text-sm">
+                Remove
+              </button>
             </div>
-
-            <div className="hr"></div>
-
-            <div className="small">Display name</div>
-            <input className="input" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Your name" />
-
-            <div style={{ height: 10 }}></div>
-            <div className="small">Profile picture URL (fastest for deployment)</div>
-            <input className="input" value={avatarUrl} onChange={(e)=>setAvatarUrl(e.target.value)} placeholder="https://..." />
-
-            <div style={{ height: 10 }}></div>
-            <div className="small">Province</div>
-            <select className="input" value={province} onChange={(e)=>setProvince(e.target.value)}>
-              <option>Eastern Cape</option><option>Free State</option><option>Gauteng</option>
-              <option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option>
-              <option>North West</option><option>Northern Cape</option><option>Western Cape</option>
-            </select>
-
-            <div style={{ height: 12 }}></div>
-            <button className="btn btnPrimary" onClick={saveProfile}>Save</button>
-
-            <div className="small" style={{ marginTop: 10 }}>{msg}</div>
-
-            <div className="hr"></div>
-            <div className="small">
-              Next: I can add a full â€œEmergency Contactsâ€ manager here (add/edit/remove, WhatsApp/SMS).
-            </div>
-          </>
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );
