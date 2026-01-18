@@ -16,11 +16,11 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ ok: false, error: "email and password required" });
     }
 
-    // IMPORTANT: ensure password is selected even if schema uses select:false
+    // ensure password is fetched
     const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(401).json({ ok: false, error: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.password);
+    const ok = await bcrypt.compare(password, user.password || "");
     if (!ok) return res.status(401).json({ ok: false, error: "Invalid credentials" });
 
     const token = jwt.sign(
