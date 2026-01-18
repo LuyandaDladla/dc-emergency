@@ -8,9 +8,6 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/auth.js";
-
-import userRoutes from "./routes/users.js";
-
 import communityRoutes from "./routes/community.js";
 
 import riskRoutes from "./routes/risk.js";
@@ -19,13 +16,14 @@ import therapistRoutes from "./routes/therapist.js";
 
 import analyticsRoutes from "./routes/analytics.js";
 
-import hotspotsRoutes from "./routes/hotspots.js";
+import hotspotsRoutes from "./routes/hotspots.js";
+
 import sosRoutes from "./routes/sos.js";
 dotenv.config();
 
 
 const app = express();
-
+app.get("/api/_build", (req,res) => res.json({ ok:true, sha:""eee29c3"", time:new Date().toISOString() }));
 app.get("/health", (req, res) => {
   res.status(200).json({ ok: true, status: "healthy" });
 });
@@ -92,7 +90,7 @@ app.use("/api/auth", authRoutes);
 
 app.use("/api/sos", sosRoutes);
 
-app.use("/api/users", userRoutes);
+
 
 
 
@@ -122,3 +120,4 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, ()=>console.log("Server running on port", PORT));
 app.use("/api/users", usersRoutes);
+
