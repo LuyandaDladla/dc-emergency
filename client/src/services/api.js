@@ -1,31 +1,49 @@
 import axios from "axios";
 
-const baseURL =
+const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "http://localhost:5000/api";
+  "https://dc-emergency.onrender.com/api";
 
 const api = axios.create({
-  baseURL,
-  withCredentials: false,
+  baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
 });
 
+// ----- token helpers (what AuthContext expects) -----
 export function setAuthToken(token) {
-  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  else delete api.defaults.headers.common["Authorization"];
+  if (token) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    localStorage.setItem("dc_token", token);
+  } else {
+    delete api.defaults.headers.common["Authorization"];
+    localStorage.removeItem("dc_token");
+  }
 }
 
-export async function tryPost(paths, body) {
-  let lastErr;
-  for (const p of paths) {
-    try {
-      const res = await api.post(p, body);
-      return res;
-    } catch (e) {
-      lastErr = e;
-    }
+// Keep token attached for every request (in case page refresh)
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("dc_token");
+  if (token && !config.headers.Authorization) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  throw lastErr;
+  return config;
+});
+
+// Small helper used by some pages/contexts:
+// tries POST and returns { ok, data, error }
+export async function tryPost(path, payload = {}, config = {}) {
+  try {
+    const res = await api.post(path, payload, config);
+    return { ok: true, data: res.data };
+  } catch (err) {
+    const data = err?.response?.data;
+    const msg =
+      data?.error ||
+      data?.message ||
+      err?.message ||
+      "Request failed";
+    return { ok: false, error: msg, data };
+  }
 }
 
 export { api };

@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await tryPost(
-      ["/auth/login", "/users/login", "/login", "/users/signin", "/auth/signin"],
+      ["/auth/login", "/auth/login", "/auth/login", "/auth/login", "/auth/signin"],
       { email, password }
     );
 
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password) => {
     const res = await tryPost(
-      ["/auth/register", "/users/register", "/register", "/users/signup", "/auth/signup"],
+      ["/auth/register", "/users/register", "/users/register", "/users/signup", "/auth/signup"],
       { name, email, password }
     );
 
