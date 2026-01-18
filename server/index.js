@@ -1,6 +1,8 @@
-import express from "express";
-import usersRoutes from "./routes/users.js";
 import cors from "cors";
+import express from "express";
+
+import usersRoutes from "./routes/users.js";
+
 
 import dotenv from "dotenv";
 
@@ -22,6 +24,27 @@ dotenv.config();
 
 
 const app = express();
+const allowlist = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://dc-emergency.vercel.app", 
+];
+
+app.use(cors({
+    origin: (origin, cb) => {
+       
+        if (!origin) return cb(null, true);
+        if (allowlist.includes(origin)) return cb(null, true);
+        return cb(new Error("CORS blocked: " + origin));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
+}));
+
+
+app.options("*", cors());
+
 app.get("/api/_build", (req,res) => res.json({ ok:true, sha:"eee29c3", time:new Date().toISOString() }));
 app.get("/health", (req, res) => {
   res.status(200).json({ ok: true, status: "healthy" });
