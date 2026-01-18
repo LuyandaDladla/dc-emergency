@@ -23,7 +23,7 @@ dotenv.config();
 
 
 const app = express();
-app.get("/api/_build", (req,res) => res.json({ ok:true, sha:""eee29c3"", time:new Date().toISOString() }));
+app.get("/api/_build", (req,res) => res.json({ ok:true, sha:"eee29c3", time:new Date().toISOString() }));
 app.get("/health", (req, res) => {
   res.status(200).json({ ok: true, status: "healthy" });
 });
@@ -33,7 +33,7 @@ app.get("/api/health", (req, res) => {
 app.use(express.json());
 
 
-// CORS: allow localhost + your Vercel domain + previews
+
 
 const allowed = [
 
