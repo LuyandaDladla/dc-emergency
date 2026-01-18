@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import api, { setAuthToken, tryPost } from "../services/api";
+import api, { setAuthToken, tryGet, tryPost } from "../services/api";
 
 const AuthContext = createContext({
   user: null,
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await tryPost(
-      ["/auth/login", "/auth/login", "/auth/login", "/auth/login", "/auth/signin"],
+      ["/auth/login", "/auth/login", "/auth/login", "/auth/login", "/auth/login"],
       { email, password }
     );
 
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password) => {
     const res = await tryPost(
-      ["/auth/register", "/users/register", "/users/register", "/users/signup", "/auth/signup"],
+      ["/users/register", "/users/register", "/users/register", "/users/register", "/auth/signup"],
       { name, email, password }
     );
 

@@ -1,50 +1,48 @@
 import axios from "axios";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  "https://dc-emergency.onrender.com/api";
+// Priority order:
+// 1) VITE_API_BASE (Vercel/Netlify env)
+// 2) localhost server (dev)
+// 3) Render fallback (prod)
+const ENV_BASE =
+  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
+  "";
+
+const FALLBACK_BASE =
+  ENV_BASE ||
+  (location.hostname === "localhost" ? "http://localhost:10000/api" : "https://dc-emergency.onrender.com/api");
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: FALLBACK_BASE,
+  withCredentials: false,
   headers: { "Content-Type": "application/json" },
 });
 
-// ----- token helpers (what AuthContext expects) -----
+// Attach/remove token globally
 export function setAuthToken(token) {
-  if (token) {
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    localStorage.setItem("dc_token", token);
-  } else {
-    delete api.defaults.headers.common["Authorization"];
-    localStorage.removeItem("dc_token");
-  }
+  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  else delete api.defaults.headers.common["Authorization"];
 }
 
-// Keep token attached for every request (in case page refresh)
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("dc_token");
-  if (token && !config.headers.Authorization) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Small helper used by some pages/contexts:
-// tries POST and returns { ok, data, error }
-export async function tryPost(path, payload = {}, config = {}) {
+// Helpers that always return { ok, ... } shape
+export async function tryGet(path, config = {}) {
   try {
-    const res = await api.post(path, payload, config);
-    return { ok: true, data: res.data };
-  } catch (err) {
-    const data = err?.response?.data;
-    const msg =
-      data?.error ||
-      data?.message ||
-      err?.message ||
-      "Request failed";
-    return { ok: false, error: msg, data };
+    const res = await api.get(path, config);
+    return res?.data ?? { ok: true };
+  } catch (e) {
+    const data = e?.response?.data;
+    return data ?? { ok: false, error: e?.message || "Request failed" };
   }
 }
 
-export { api };
+export async function tryPost(path, body = {}, config = {}) {
+  try {
+    const res = await api.post(path, body, config);
+    return res?.data ?? { ok: true };
+  } catch (e) {
+    const data = e?.response?.data;
+    return data ?? { ok: false, error: e?.message || "Request failed" };
+  }
+}
+
 export default api;
