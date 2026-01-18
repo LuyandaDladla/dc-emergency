@@ -1,5 +1,4 @@
-import express from "express";
-
+import express from "express";
 import usersRoutes from "./routes/users.js";
 import cors from "cors";
 
@@ -35,6 +34,9 @@ app.use(express.json());
 
 
 
+
+
+app.use("/api/users", usersRoutes);
 const allowed = [
 
   "http://localhost:5173",
@@ -119,5 +121,3 @@ app.use("/api/hotspots", hotspotsRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, ()=>console.log("Server running on port", PORT));
-
-app.use("/api/users", usersRoutes);
