@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -15,7 +15,7 @@ export default function Register() {
         e.preventDefault();
         setErr("");
         try {
-            await register(email.trim(), password, name.trim());
+            await register(name.trim(), email.trim(), password);
             nav("/");
         } catch (e2) {
             setErr(e2?.message || "Could not create account.");

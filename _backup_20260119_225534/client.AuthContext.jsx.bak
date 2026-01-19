@@ -27,9 +27,9 @@ export function AuthProvider({ children }) {
     return true;
   }
 
-  // IMPORTANT: register(name, email, password) in THIS order
-  async function register(name, email, password) {
-    const res = await tryPost("/users/register", { name, email, password });
+  // IMPORTANT: Register signature matches Register.jsx usage: (email, password, name)
+  async function register(email, password, name) {
+    const res = await tryPost("/users/register", { email, password, name });
     setAuthToken(res?.token);
     setToken(res?.token || null);
     await refreshMe();

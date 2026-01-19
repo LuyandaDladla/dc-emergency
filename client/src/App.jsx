@@ -10,6 +10,10 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
+import Chat from "./pages/Chat";
+import Admin from "./pages/Admin";
+
+
 
 function Protected({ children }) {
     const { token, loading } = useAuth();
@@ -30,6 +34,8 @@ export default function App() {
                         </Protected>
                     }
                 />
+                <Route path="/admin" element={<Admin />} />
+
                 <Route
                     path="/sos"
                     element={
@@ -71,6 +77,7 @@ export default function App() {
                     }
                 />
             </Route>
+            <Route path="/chat" element={<Chat />} />
 
             
             <Route path="/login" element={<Login />} />
