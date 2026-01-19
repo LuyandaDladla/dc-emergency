@@ -1,11 +1,13 @@
-﻿import React from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+﻿import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import React from "react";
 import BottomNav from "./BottomNav";
 import { Siren } from "lucide-react";
 
 function cx(...classes) {
     return classes.filter(Boolean).join(" ");
+
 }
+
 
 export default function AppShell() {
     const nav = useNavigate();
