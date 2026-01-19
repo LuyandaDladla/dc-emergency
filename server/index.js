@@ -1,4 +1,4 @@
-import cors from "cors";
+﻿import cors from "cors";
 import express from "express";
 
 import usersRoutes from "./routes/users.js";
@@ -24,6 +24,29 @@ dotenv.config();
 
 
 const app = express();
+  
+// CORS__SINGLE_SOURCE_OF_TRUTH
+const corsOptions = {
+  origin: (origin, cb) => {
+    // allow server-to-server, curl, postman
+    if (!origin) return cb(null, true);
+
+    // allow localhost dev
+    if (origin === "http://localhost:5173") return cb(null, true);
+    if (origin === "http://127.0.0.1:5173") return cb(null, true);
+
+    // allow ALL vercel previews + prod
+    if (origin.endsWith(".vercel.app")) return cb(null, true);
+
+    return cb(new Error("CORS blocked: " + origin));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 const allowlist = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -41,10 +64,6 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
 }));
-
-
-app.options("*", cors());
-
 app.get("/api/_build", (req,res) => res.json({ ok:true, sha:"eee29c3", time:new Date().toISOString() }));
 app.get("/health", (req, res) => {
   res.status(200).json({ ok: true, status: "healthy" });
@@ -52,6 +71,36 @@ app.get("/health", (req, res) => {
 app.get("/api/health", (req, res) => {
   res.status(200).json({ ok: true, status: "healthy" });
 });
+
+import cors from "cors";
+
+const allowlist = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    //Vercel domain here
+     "https://dc-emergency.vercel.app/",
+];
+
+const corsOptions = {
+    origin: function (origin, cb) {
+        // allow curl/postman/no-origin
+        if (!origin) return cb(null, true);
+
+        // allow any vercel preview automatically
+        if (origin.endsWith(".vercel.app")) return cb(null, true);
+
+        if (allowlist.includes(origin)) return cb(null, true);
+
+        return cb(new Error("CORS blocked: " + origin));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
+};
+//handles preflight
+app.use(express.json());
+
+
 app.use(express.json());
 
 
@@ -90,10 +139,6 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"]
 
 }));
-
-app.options("*", cors());
-
-
 // Always available
 
 app.get("/", (req,res)=>res.json({ ok:true, service:"dc-emergency-backend" }));
@@ -144,3 +189,5 @@ app.use("/api/hotspots", hotspotsRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, ()=>console.log("Server running on port", PORT));
+
+

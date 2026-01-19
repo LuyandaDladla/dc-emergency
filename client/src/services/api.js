@@ -1,48 +1,31 @@
-import axios from "axios";
+﻿const API_BASE =
+  import.meta.env.VITE_API_BASE || "https://dc-emergency.onrender.com/api";
 
-// Priority order:
-// 1) VITE_API_BASE (Vercel/Netlify env)
-// 2) localhost server (dev)
-// 3) Render fallback (prod)
-const ENV_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
-  "";
+let authToken = localStorage.getItem("token") || null;
 
-const FALLBACK_BASE =
-  ENV_BASE ||
-  (location.hostname === "localhost" ? "http://localhost:10000/api" : "https://dc-emergency.onrender.com/api");
-
-const api = axios.create({
-  baseURL: FALLBACK_BASE,
-  withCredentials: false,
-  headers: { "Content-Type": "application/json" },
-});
-
-// Attach/remove token globally
 export function setAuthToken(token) {
-  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  else delete api.defaults.headers.common["Authorization"];
+  authToken = token || null;
+  if (authToken) localStorage.setItem("token", authToken);
+  else localStorage.removeItem("token");
 }
 
-// Helpers that always return { ok, ... } shape
-export async function tryGet(path, config = {}) {
-  try {
-    const res = await api.get(path, config);
-    return res?.data ?? { ok: true };
-  } catch (e) {
-    const data = e?.response?.data;
-    return data ?? { ok: false, error: e?.message || "Request failed" };
-  }
+async function request(method, path, body) {
+  const headers = { "Content-Type": "application/json" };
+  if (authToken) headers.Authorization = "Bearer " + authToken;
+
+  const res = await fetch(API_BASE + path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: "include",
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || ("HTTP " + res.status));
+  return data;
 }
 
-export async function tryPost(path, body = {}, config = {}) {
-  try {
-    const res = await api.post(path, body, config);
-    return res?.data ?? { ok: true };
-  } catch (e) {
-    const data = e?.response?.data;
-    return data ?? { ok: false, error: e?.message || "Request failed" };
-  }
-}
+export const tryPost = (path, body) => request("POST", path, body);
+export const tryGet = (path) => request("GET", path);
 
-export default api;
+export default { tryPost, tryGet, setAuthToken };
