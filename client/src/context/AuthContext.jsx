@@ -1,55 +1,64 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import api, { setAuthToken } from "../services/api";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import api, { setAuthToken, getAuthToken, tryGet, tryPost } from "../services/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem("token"));
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [token, setToken] = useState(getAuthToken());
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setAuthToken(token);
-  }, [token]);
-
-  async function login(email, password) {
-    setError("");
-    setLoading(true);
-    try {
-      const res = await api.tryPost("/auth/login", { email, password });
-      setToken(res.token);
-      return true;
-    } catch (e) {
-      setError(e?.message || "Login failed");
-      return false;
-    } finally {
-      setLoading(false);
+  async function refreshMe() {
+    const t = getAuthToken();
+    if (!t) {
+      setUser(null);
+      return null;
     }
+    const res = await tryGet("/users/me");
+    setUser(res?.user || null);
+    return res?.user || null;
   }
 
+  async function login(email, password) {
+    const res = await tryPost("/auth/login", { email, password });
+    setAuthToken(res?.token);
+    setToken(res?.token || null);
+    await refreshMe();
+    return true;
+  }
+
+  // IMPORTANT: Register signature matches Register.jsx usage: (email, password, name)
   async function register(email, password, name) {
-    setError("");
-    setLoading(true);
-    try {
-      const res = await api.tryPost("/users/register", { email, password, name });
-      setToken(res.token);
-      return true;
-    } catch (e) {
-      setError(e?.message || "Register failed");
-      return false;
-    } finally {
-      setLoading(false);
-    }
+    const res = await tryPost("/users/register", { email, password, name });
+    setAuthToken(res?.token);
+    setToken(res?.token || null);
+    await refreshMe();
+    return true;
   }
 
   function logout() {
-    setToken(null);
     setAuthToken(null);
+    setToken(null);
+    setUser(null);
   }
 
+  useEffect(() => {
+    (async () => {
+      try {
+        await refreshMe();
+      } catch {
+        setAuthToken(null);
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
   const value = useMemo(
-    () => ({ token, loading, error, login, register, logout }),
-    [token, loading, error]
+    () => ({ token, user, loading, login, register, logout, refreshMe, apiBase: api.base }),
+    [token, user, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
