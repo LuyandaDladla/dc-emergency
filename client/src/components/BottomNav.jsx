@@ -1,32 +1,39 @@
-import { NavLink, useLocation } from "react-router-dom";
+﻿import { Home, AlertTriangle, Users, Shield, User } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
-function Tab({ to, label }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        "flex-1 text-center py-3 text-xs " +
-        (isActive ? "text-white" : "text-white/60 hover:text-white")
-      }
-    >
-      {label}
-    </NavLink>
-  );
-}
+const items = [
+    { to: "/", label: "Home", icon: Home },
+    { to: "/sos", label: "SOS", icon: AlertTriangle, danger: true },
+    { to: "/community", label: "Community", icon: Users },
+    { to: "/risk", label: "Risk", icon: Shield },
+    { to: "/profile", label: "Profile", icon: User },
+];
 
 export default function BottomNav() {
-  const { pathname } = useLocation();
-  const hide = pathname === "/login" || pathname === "/register";
-  if (hide) return null;
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black/90 border-t border-white/10 backdrop-blur">
-      <div className="mx-auto max-w-md flex">
-        <Tab to="/" label="SOS" />
-        <Tab to="/community" label="Community" />
-        <Tab to="/risk" label="Risk" />
-        <Tab to="/profile" label="Profile" />
-      </div>
-    </div>
-  );
+    return (
+        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black/80 backdrop-blur">
+            <div className="grid grid-cols-5 py-2">
+                {items.map(({ to, label, icon: Icon, danger }) => (
+                    <NavLink
+                        key={to}
+                        to={to}
+                        className={({ isActive }) =>
+                            `flex flex-col items-center justify-center gap-1 text-xs transition
+               ${isActive
+                                ? danger
+                                    ? "text-red-400"
+                                    : "text-white"
+                                : "text-white/50 hover:text-white"}`
+                        }
+                    >
+                        <Icon
+                            size={22}
+                            className={danger ? "text-red-500" : ""}
+                        />
+                        <span>{label}</span>
+                    </NavLink>
+                ))}
+            </div>
+        </nav>
+    );
 }

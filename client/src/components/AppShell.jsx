@@ -1,6 +1,17 @@
-﻿import React from "react";
+﻿import {
+    Home as HomeIcon,
+    Users as UsersIcon,
+    Siren as SirenIcon,
+    MessageCircle as ChatIcon,
+    ShieldAlert as RiskIcon,
+    User as UserIcon,
+} from "lucide-react";
+
+import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import SOSFab from "./SOSFab";
+
 
 const nav = [
   { to: "/", label: "Home" },
@@ -47,23 +58,31 @@ export default function AppShell() {
       {/* Main */}
       <main className="mx-auto max-w-5xl px-4 pb-24 pt-4">
         <Outlet />
-      </main>
+          </main>
+
+          export default function AppShell({children}) {
+  return (
+          <div className="min-h-screen bg-[#0B0B0F] text-white">
+              {children}
+
+              {/* Global floating SOS access */}
+              <SOSFab />
+
+              {/* Bottom nav (your existing component) */}
+              {/* <BottomNav /> */}
+          </div>
+          );
+}
+
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-900/80 bg-zinc-950/80 backdrop-blur">
-        <div className="mx-auto grid max-w-5xl grid-cols-5 gap-2 px-2 py-2">
-          {nav.slice(0, 2).map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              className={classNames(
-                "btn-ghost py-2 text-sm",
-                pathname === n.to && "border-emerald-500/30 bg-emerald-500/10"
-              )}
-            >
-              {n.label}
-            </Link>
-          ))}
+          {/* Bottom Nav (icons + labels) */}
+          <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-900/80 bg-zinc-950/85 backdrop-blur">
+              <div className="mx-auto max-w-5xl px-3 py-2">
+                  <BottomNav currentPath={pathname} />
+              </div>
+          </nav>
+
 
           {/* Primary SOS */}
           <Link
@@ -92,4 +111,51 @@ export default function AppShell() {
       </nav>
     </div>
   );
+}
+function BottomNav({ currentPath }) {
+    const items = [
+        { to: "/", label: "Home", Icon: HomeIcon },
+        { to: "/community", label: "Community", Icon: UsersIcon },
+        { to: "/sos", label: "SOS", Icon: SirenIcon, primary: true },
+        { to: "/therapist", label: "Therapist", Icon: ChatIcon },
+        { to: "/risk", label: "Risk", Icon: RiskIcon },
+        { to: "/profile", label: "Profile", Icon: UserIcon },
+    ];
+
+    return (
+        <div className="grid grid-cols-6 gap-2">
+            {items.map(({ to, label, Icon, primary }) => {
+                const active = currentPath === to;
+
+                return (
+                    <Link
+                        key={to}
+                        to={to}
+                        className={[
+                            "flex flex-col items-center justify-center rounded-2xl border px-2 py-2",
+                            "transition active:scale-[0.99]",
+                            primary
+                                ? "bg-rose-500 text-zinc-950 border-rose-400 hover:bg-rose-400"
+                                : "bg-zinc-900/40 border-zinc-800 hover:bg-zinc-900/70",
+                            active && !primary ? "border-emerald-500/40 bg-emerald-500/10" : "",
+                        ].join(" ")}
+                        aria-label={label}
+                    >
+                        <Icon
+                            size={22}
+                            className={primary ? "opacity-95" : active ? "text-emerald-300" : "text-zinc-200"}
+                        />
+                        <span
+                            className={[
+                                "mt-1 text-[11px] leading-none",
+                                primary ? "font-semibold" : "text-zinc-200",
+                            ].join(" ")}
+                        >
+                            {label}
+                        </span>
+                    </Link>
+                );
+            })}
+        </div>
+    );
 }
