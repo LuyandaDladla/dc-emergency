@@ -1,46 +1,95 @@
 ﻿import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-function TopBar() {
-  return (
-    <div className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-zinc-200">
-      <div className="mx-auto w-[92%] max-w-2xl py-3 flex items-center justify-between">
-        <div className="font-black tracking-tight text-zinc-900">DC Emergency</div>
-        <div className="text-xs font-semibold text-zinc-600">South Africa</div>
-      </div>
-    </div>
-  );
+const nav = [
+  { to: "/", label: "Home" },
+  { to: "/community", label: "Community" },
+  { to: "/sos", label: "SOS", primary: true },
+  { to: "/therapist", label: "Therapist" },
+  { to: "/risk", label: "Risk" },
+  { to: "/profile", label: "Profile" },
+];
+
+function classNames(...xs) {
+  return xs.filter(Boolean).join(" ");
 }
 
-function BottomNav() {
-  const linkBase = "flex-1 py-2 text-xs font-semibold flex flex-col items-center gap-1 rounded-xl";
-  const active = "bg-zinc-100 text-zinc-900";
-  const idle = "text-zinc-600 hover:bg-zinc-50";
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-t border-zinc-200">
-      <div className="mx-auto w-[92%] max-w-2xl py-2 grid grid-cols-5 gap-2">
-        <NavLink to="/" className={({isActive}) => linkBase + " " + (isActive ? active : idle)}>Home</NavLink>
-        <NavLink to="/sos" className={({isActive}) => linkBase + " " + (isActive ? active : idle)}>SOS</NavLink>
-        <NavLink to="/community" className={({isActive}) => linkBase + " " + (isActive ? active : idle)}>Community</NavLink>
-        <NavLink to="/risk" className={({isActive}) => linkBase + " " + (isActive ? active : idle)}>Risk</NavLink>
-        <NavLink to="/profile" className={({isActive}) => linkBase + " " + (isActive ? active : idle)}>Profile</NavLink>
-      </div>
-    </div>
-  );
-}
-
-export default function AppShell({ children }) {
+export default function AppShell() {
   const { pathname } = useLocation();
-  const hideNav = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const { user, loading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      <TopBar />
-      <main className={"mx-auto w-[92%] max-w-2xl py-5 " + (hideNav ? "" : "pb-24")}>
-        {children}
+    <div className="app-bg">
+      {/* Top Bar */}
+      <header className="sticky top-0 z-20 border-b border-zinc-900/80 bg-zinc-950/70 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/15">
+              <span className="font-bold text-emerald-300">DC</span>
+            </div>
+            <div className="leading-tight">
+              <div className="font-semibold">DC Emergency</div>
+              <div className="text-xs text-zinc-400">
+                {loading ? "Loading…" : user ? `Signed in as ${user?.email}` : "Not signed in"}
+              </div>
+            </div>
+          </div>
+
+          {/* Later: language/province controls */}
+          <div className="flex items-center gap-2">
+            <span className="pill">ZA • 11 Languages</span>
+            <span className="pill">9 Provinces</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="mx-auto max-w-5xl px-4 pb-24 pt-4">
+        <Outlet />
       </main>
-      {hideNav ? null : <BottomNav />}
+
+      {/* Bottom Nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-900/80 bg-zinc-950/80 backdrop-blur">
+        <div className="mx-auto grid max-w-5xl grid-cols-5 gap-2 px-2 py-2">
+          {nav.slice(0, 2).map((n) => (
+            <Link
+              key={n.to}
+              to={n.to}
+              className={classNames(
+                "btn-ghost py-2 text-sm",
+                pathname === n.to && "border-emerald-500/30 bg-emerald-500/10"
+              )}
+            >
+              {n.label}
+            </Link>
+          ))}
+
+          {/* Primary SOS */}
+          <Link
+            to="/sos"
+            className={classNames(
+              "btn py-2 text-sm font-semibold",
+              "bg-rose-500 text-zinc-950 hover:bg-rose-400"
+            )}
+          >
+            SOS
+          </Link>
+
+          {nav.slice(3).map((n) => (
+            <Link
+              key={n.to}
+              to={n.to}
+              className={classNames(
+                "btn-ghost py-2 text-sm",
+                pathname === n.to && "border-emerald-500/30 bg-emerald-500/10"
+              )}
+            >
+              {n.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

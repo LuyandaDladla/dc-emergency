@@ -1,32 +1,82 @@
 ﻿import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import AppShell from "./components/AppShell";
-import RequireAuth from "./components/RequireAuth";
-
 import Home from "./pages/Home";
 import SOS from "./pages/SOS";
 import Community from "./pages/Community";
-import Risk from "./pages/Risk";
 import Therapist from "./pages/Therapist";
+import Risk from "./pages/Risk";
 import Profile from "./pages/Profile";
-
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import { useAuth } from "./context/AuthContext";
+
+function Protected({ children }) {
+    const { token, loading } = useAuth();
+    if (loading) return <div className="card card-pad">Loading…</div>;
+    if (!token) return <Navigate to="/login" replace />;
+    return children;
+}
 
 export default function App() {
-  return (
-    <AppShell>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    return (
+        <Routes>
+            <Route element={<AppShell />}>
+                <Route
+                    path="/"
+                    element={
+                        <Protected>
+                            <Home />
+                        </Protected>
+                    }
+                />
+                <Route
+                    path="/sos"
+                    element={
+                        <Protected>
+                            <SOS />
+                        </Protected>
+                    }
+                />
+                <Route
+                    path="/community"
+                    element={
+                        <Protected>
+                            <Community />
+                        </Protected>
+                    }
+                />
+                <Route
+                    path="/therapist"
+                    element={
+                        <Protected>
+                            <Therapist />
+                        </Protected>
+                    }
+                />
+                <Route
+                    path="/risk"
+                    element={
+                        <Protected>
+                            <Risk />
+                        </Protected>
+                    }
+                />
+                <Route
+                    path="/profile"
+                    element={
+                        <Protected>
+                            <Profile />
+                        </Protected>
+                    }
+                />
+            </Route>
 
-        <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
-        <Route path="/sos" element={<RequireAuth><SOS /></RequireAuth>} />
-        <Route path="/community" element={<RequireAuth><Community /></RequireAuth>} />
-        <Route path="/risk" element={<RequireAuth><Risk /></RequireAuth>} />
-        <Route path="/therapist" element={<RequireAuth><Therapist /></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-      </Routes>
-    </AppShell>
-  );
+            
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
 }
