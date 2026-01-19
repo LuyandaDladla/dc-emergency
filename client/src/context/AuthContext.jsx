@@ -1,93 +1,56 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import api, { setAuthToken, tryGet, tryPost } from "../services/api";
+﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import api, { setAuthToken } from "../services/api";
 
-const AuthContext = createContext({
-  user: null,
-  token: null,
-  loading: false,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  refreshMe: async () => {},
-});
-
-function pickToken(data) {
-  return data?.token || data?.accessToken || data?.jwt || data?.data?.token || null;
-}
-function pickUser(data) {
-  return data?.user || data?.data?.user || data?.profile || null;
-}
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem("dc_token") || null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const refreshMe = async () => {
-    if (!token) { setUser(null); return; }
-    try {
-      const res = await api.get("/users/me");
-      setUser(res.data?.user || res.data || null);
-    } catch {
-      setUser(null);
-    }
-  };
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setAuthToken(token);
-    (async () => {
-      setLoading(true);
-      await refreshMe();
-      setLoading(false);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const login = async (email, password) => {
-    const res = await tryPost(
-      ["/auth/login", "/auth/login", "/auth/login", "/auth/login", "/auth/login"],
-      { email, password }
-    );
-
-    const data = res.data;
-    const t = pickToken(data);
-    const u = pickUser(data);
-
-    if (t) {
-      localStorage.setItem("dc_token", t);
-      setToken(t);
+  async function login(email, password) {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await api.tryPost("/auth/login", { email, password });
+      setToken(res.token);
+      return true;
+    } catch (e) {
+      setError(e?.message || "Login failed");
+      return false;
+    } finally {
+      setLoading(false);
     }
-    if (u) setUser(u);
+  }
 
-    return data;
-  };
-
-  const register = async (name, email, password) => {
-    const res = await tryPost(
-      ["/users/register", "/users/register", "/users/register", "/users/register", "/auth/signup"],
-      { name, email, password }
-    );
-
-    const data = res.data;
-    const t = pickToken(data);
-    const u = pickUser(data);
-
-    if (t) {
-      localStorage.setItem("dc_token", t);
-      setToken(t);
+  async function register(email, password, name) {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await api.tryPost("/users/register", { email, password, name });
+      setToken(res.token);
+      return true;
+    } catch (e) {
+      setError(e?.message || "Register failed");
+      return false;
+    } finally {
+      setLoading(false);
     }
-    if (u) setUser(u);
+  }
 
-    return data;
-  };
-
-  const logout = () => {
-    localStorage.removeItem("dc_token");
+  function logout() {
     setToken(null);
-    setUser(null);
-  };
+    setAuthToken(null);
+  }
 
-  const value = useMemo(() => ({ user, token, loading, login, register, logout, refreshMe }), [user, token, loading]);
+  const value = useMemo(
+    () => ({ token, loading, error, login, register, logout }),
+    [token, loading, error]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

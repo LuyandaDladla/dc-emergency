@@ -1,22 +1,17 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import SOS from "./pages/SOS.jsx";
-import Community from "./pages/Community.jsx";
-import Risk from "./pages/Risk.jsx";
-import Therapist from "./pages/Therapist.jsx";
-import Profile from "./pages/Profile.jsx";
-import AppShell from "./components/AppShell.jsx";
-import { useAuth } from "./context/AuthContext.jsx";
+﻿import React from "react";
+import { Routes, Route } from "react-router-dom";
+import AppShell from "./components/AppShell";
+import RequireAuth from "./components/RequireAuth";
 
-function Protected({ children }) {
-  const ctx = useAuth();
-  const user = ctx?.user;
-  const loading = ctx?.loading;
-  if (loading) return <div className="p-6 text-white/70">Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  return children;
-}
+import Home from "./pages/Home";
+import SOS from "./pages/SOS";
+import Community from "./pages/Community";
+import Risk from "./pages/Risk";
+import Therapist from "./pages/Therapist";
+import Profile from "./pages/Profile";
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 export default function App() {
   return (
@@ -25,13 +20,12 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        <Route path="/" element={<Protected><SOS /></Protected>} />
-        <Route path="/community" element={<Protected><Community /></Protected>} />
-        <Route path="/risk" element={<Protected><Risk /></Protected>} />
-        <Route path="/therapist" element={<Protected><Therapist /></Protected>} />
-        <Route path="/profile" element={<Protected><Profile /></Protected>} />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
+        <Route path="/sos" element={<RequireAuth><SOS /></RequireAuth>} />
+        <Route path="/community" element={<RequireAuth><Community /></RequireAuth>} />
+        <Route path="/risk" element={<RequireAuth><Risk /></RequireAuth>} />
+        <Route path="/therapist" element={<RequireAuth><Therapist /></RequireAuth>} />
+        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
       </Routes>
     </AppShell>
   );

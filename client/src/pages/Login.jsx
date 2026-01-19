@@ -1,48 +1,89 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+﻿import React, { useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import Spinner from "../components/ui/Spinner";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function Login() {
-  const nav = useNavigate();
   const { login } = useAuth();
+  const toast = useToast();
+  const nav = useNavigate();
+  const loc = useLocation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const submit = async (e) => {
+  const from = useMemo(() => (loc.state && loc.state.from) ? loc.state.from : "/", [loc.state]);
+
+  async function submit(e) {
     e.preventDefault();
-    setErr("");
+    setBusy(true);
     try {
-      await login(email, password);
-      nav("/");
-    } catch (e2) {
-      setErr(e2?.response?.data?.message || "Login failed");
+      await login(email.trim(), password);
+      toast.success("You are signed in.");
+      nav(from, { replace: true });
+    } catch (err) {
+      toast.error((err && err.message) ? err.message : "Login failed. Check your details and try again.");
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-[calc(100vh-40px)] flex items-center justify-center p-6">
-      <form onSubmit={submit} className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
-        <div>
-          <div className="text-2xl font-bold">Login</div>
-          <div className="text-sm text-white/60 mt-1">Welcome back.</div>
+    <div className="mx-auto max-w-md pt-6">
+      <Card className="p-5">
+        <div className="mb-4">
+          <div className="text-xl font-black tracking-tight">Welcome back</div>
+          <div className="text-sm text-zinc-600">Sign in to continue.</div>
         </div>
 
-        {err && <div className="text-sm text-red-200 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">{err}</div>}
+        <form onSubmit={submit} className="space-y-3">
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+          />
 
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email"
-          className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3" />
-        <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password"
-          className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3" />
+          <div className="space-y-1">
+            <Input
+              label="Password"
+              type={show ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+            <button
+              type="button"
+              className="text-xs font-semibold text-zinc-700 hover:text-zinc-900"
+              onClick={() => setShow((s) => !s)}
+            >
+              {show ? "Hide password" : "Show password"}
+            </button>
+          </div>
 
-        <button className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 font-semibold">
-          Sign in
-        </button>
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? (<><Spinner /> Signing in...</>) : "Sign in"}
+          </Button>
 
-        <div className="text-sm text-white/60">
-          No account? <Link className="text-white underline" to="/register">Register</Link>
-        </div>
-      </form>
+          <div className="text-sm text-zinc-600 text-center">
+            Don&apos;t have an account?{" "}
+            <Link className="font-bold text-zinc-900 hover:underline" to="/register">
+              Create one
+            </Link>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }

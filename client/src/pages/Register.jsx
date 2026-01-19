@@ -1,51 +1,94 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import Spinner from "../components/ui/Spinner";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function Register() {
-  const nav = useNavigate();
   const { register } = useAuth();
+  const toast = useToast();
+  const nav = useNavigate();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const submit = async (e) => {
+  async function submit(e) {
     e.preventDefault();
-    setErr("");
+    setBusy(true);
     try {
-      await register(name, email, password);
-      nav("/");
-    } catch (e2) {
-      setErr(e2?.response?.data?.message || "Registration failed");
+      await register(email.trim(), password, name.trim());
+      toast.success("Account created. You are signed in.");
+      nav("/", { replace: true });
+    } catch (err) {
+      toast.error((err && err.message) ? err.message : "Register failed. Try a different email.");
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-[calc(100vh-40px)] flex items-center justify-center p-6">
-      <form onSubmit={submit} className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
-        <div>
-          <div className="text-2xl font-bold">Create account</div>
-          <div className="text-sm text-white/60 mt-1">Start safer, faster.</div>
+    <div className="mx-auto max-w-md pt-6">
+      <Card className="p-5">
+        <div className="mb-4">
+          <div className="text-xl font-black tracking-tight">Create your account</div>
+          <div className="text-sm text-zinc-600">Takes less than a minute.</div>
         </div>
 
-        {err && <div className="text-sm text-red-200 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">{err}</div>}
+        <form onSubmit={submit} className="space-y-3">
+          <Input
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Luyanda"
+          />
 
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name"
-          className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3" />
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email"
-          className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3" />
-        <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password"
-          className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3" />
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+          />
 
-        <button className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 font-semibold">
-          Register
-        </button>
+          <div className="space-y-1">
+            <Input
+              label="Password"
+              type={show ? "text" : "password"}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              required
+            />
+            <button
+              type="button"
+              className="text-xs font-semibold text-zinc-700 hover:text-zinc-900"
+              onClick={() => setShow((s) => !s)}
+            >
+              {show ? "Hide password" : "Show password"}
+            </button>
+          </div>
 
-        <div className="text-sm text-white/60">
-          Already have an account? <Link className="text-white underline" to="/login">Login</Link>
-        </div>
-      </form>
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? (<><Spinner /> Creating...</>) : "Create account"}
+          </Button>
+
+          <div className="text-sm text-zinc-600 text-center">
+            Already have an account?{" "}
+            <Link className="font-bold text-zinc-900 hover:underline" to="/login">
+              Sign in
+            </Link>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }
