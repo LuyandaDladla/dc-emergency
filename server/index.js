@@ -53,24 +53,20 @@ const allowlist = [
     "https://dc-emergency.vercel.app", 
 ];
 
-app.use(cors({
-    origin: (origin, cb) => {
-       
-        if (!origin) return cb(null, true);
-        if (allowlist.includes(origin)) return cb(null, true);
-        return cb(new Error("CORS blocked: " + origin));
-    },
+const corsOptions = {
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://dc-emergency.vercel.app"
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
-}));
-app.get("/api/_build", (req,res) => res.json({ ok:true, sha:"eee29c3", time:new Date().toISOString() }));
-app.get("/health", (req, res) => {
-  res.status(200).json({ ok: true, status: "healthy" });
-});
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ ok: true, status: "healthy" });
-});
+    allowedHeaders: ["Content-Type", "Authorization", "X-Auth-Token"]
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 
 import cors from "cors";
 
