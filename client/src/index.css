@@ -1,63 +1,16 @@
-﻿@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Dark-first design system */
-:root {
-    color-scheme: dark;
+:root{
+  --bg:#070A0F;
+  --surface:#0B0F14;
+  --surface2:#101826;
+  --text:#EAF0FF;
+  --muted:#AAB6D3;
+  --border:rgba(255,255,255,0.10);
+  --accent:#5B8CFF;
 }
-
-html, body, #root {
-    height: 100%;
-}
-
-body {
-    @apply bg-zinc-950 text-zinc-100 antialiased;
-}
-
-/* Reusable UI primitives */
-@layer components {
-    .app-bg {
-        @apply min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900;
-    }
-
-    .card {
-        @apply rounded-2xl border border-zinc-800 bg-zinc-900/60 shadow-sm;
-    }
-
-    .card-pad {
-        @apply p-4 sm:p-5;
-    }
-
-    .btn {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60;
-    }
-
-    .btn-primary {
-        @apply btn bg-emerald-500 text-zinc-950 hover:bg-emerald-400;
-    }
-
-    .btn-ghost {
-        @apply btn border border-zinc-700 bg-zinc-800/60 hover:bg-zinc-800;
-    }
-
-    .input {
-        @apply w-full rounded-xl border border-zinc-800 bg-zinc-950/40 px-4 py-3 outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/40;
-    }
-
-    .label {
-        @apply text-sm text-zinc-300;
-    }
-
-    .helper {
-        @apply text-sm text-zinc-400;
-    }
-
-    .error {
-        @apply rounded-xl border border-rose-900/60 bg-rose-950/40 p-3 text-sm text-rose-300;
-    }
-
-    .pill {
-        @apply inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-200;
-    }
-}
+html,body{height:100%;background:var(--bg);color:var(--text);}
+*{box-sizing:border-box;}
+a{color:var(--accent);}
+input,select,textarea{background:var(--surface2);color:var(--text);border:1px solid var(--border);outline:none;}
+.dc-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;}
+.dc-btn{background:var(--accent);color:#071021;border:0;padding:10px 14px;border-radius:12px;font-weight:800;}
+.dc-btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);padding:10px 14px;border-radius:12px;font-weight:800;}

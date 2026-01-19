@@ -1,47 +1,25 @@
 import React from "react";
-import { Outlet, useNavigate } from "react-router-dom";
 import BottomNav from "./BottomNav";
-import { Siren } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
-function cls() {
-  return Array.prototype.slice.call(arguments).filter(Boolean).join(" ");
-}
-
-export default function AppShell() {
-  const nav = useNavigate();
+export default function AppShell({ children }) {
+  const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen text-white">
-      {/* Background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#070A12] to-black" />
-        <div className="absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute top-56 right-[-80px] h-72 w-72 rounded-full bg-fuchsia-500/10 blur-3xl" />
-        <div className="absolute bottom-[-120px] left-[-120px] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
-      </div>
+    <div style={{ minHeight: "100vh", paddingBottom: 74, background: "var(--bg)", color: "var(--text)" }}>
+      <header style={{ position: "sticky", top: 0, zIndex: 10, background: "rgba(7,10,15,0.9)", backdropFilter: "blur(10px)", borderBottom: "1px solid var(--border)", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <b>DC Emergency</b>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", color: "var(--muted)" }}>
+          {user?.email ? <span style={{ fontSize: 12 }}>{user.email}</span> : null}
+          <button className="dc-btn-secondary" onClick={logout}>Logout</button>
+        </div>
+      </header>
 
-      {/* Page content */}
-      <div className="mx-auto max-w-3xl px-4 pb-28 pt-4">
-        <Outlet />
-      </div>
+      <main>{children}</main>
 
-      {/* Floating SOS (always accessible) */}
-      <button
-        type="button"
-        onClick={() => nav("/sos")}
-        className={cls(
-          "fixed bottom-[92px] right-5 z-[60]",
-          "h-14 w-14 rounded-2xl",
-          "border border-red-300/20 bg-red-500/20",
-          "backdrop-blur-2xl shadow-2xl shadow-black/50",
-          "flex items-center justify-center",
-          "active:scale-[0.98] transition"
-        )}
-        aria-label="Open SOS"
-        title="SOS"
-      >
-        <Siren size={20} className="text-red-100" />
-      </button>
+      <a href="/sos" aria-label="SOS" style={{ position: "fixed", right: 16, bottom: 86, width: 64, height: 64, borderRadius: 999, display: "grid", placeItems: "center", background: "rgba(255,59,59,0.18)", border: "1px solid rgba(255,59,59,0.40)", color: "var(--text)", fontWeight: 900, textDecoration: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.35)" }}>
+        SOS
+      </a>
 
       <BottomNav />
     </div>

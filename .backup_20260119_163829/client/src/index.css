@@ -1,0 +1,63 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark-first design system */
+:root {
+    color-scheme: dark;
+}
+
+html, body, #root {
+    height: 100%;
+}
+
+body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+}
+
+/* Reusable UI primitives */
+@layer components {
+    .app-bg {
+        @apply min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900;
+    }
+
+    .card {
+        @apply rounded-2xl border border-zinc-800 bg-zinc-900/60 shadow-sm;
+    }
+
+    .card-pad {
+        @apply p-4 sm:p-5;
+    }
+
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .btn-primary {
+        @apply btn bg-emerald-500 text-zinc-950 hover:bg-emerald-400;
+    }
+
+    .btn-ghost {
+        @apply btn border border-zinc-700 bg-zinc-800/60 hover:bg-zinc-800;
+    }
+
+    .input {
+        @apply w-full rounded-xl border border-zinc-800 bg-zinc-950/40 px-4 py-3 outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/40;
+    }
+
+    .label {
+        @apply text-sm text-zinc-300;
+    }
+
+    .helper {
+        @apply text-sm text-zinc-400;
+    }
+
+    .error {
+        @apply rounded-xl border border-rose-900/60 bg-rose-950/40 p-3 text-sm text-rose-300;
+    }
+
+    .pill {
+        @apply inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-200;
+    }
+}

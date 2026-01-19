@@ -1,96 +1,54 @@
-﻿import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
-    const nav = useNavigate();
-    const { register, loading } = useAuth();
+  const { register, loading } = useAuth();
+  const [name, setName] = useState("New User");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [err, setErr] = useState("");
+  async function onSubmit(e) {
+    e.preventDefault();
+    setError("");
+    const r = await register(name, email, password);
+    if (!r.ok) setError(r.error);
+  }
 
-    async function submit(e) {
-        e.preventDefault();
-        setErr("");
-        try {
-            await register(email.trim(), password, name.trim());
-            nav("/");
-        } catch (e2) {
-            setErr(e2?.message || "Could not create account.");
-        }
-    }
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", display: "grid", placeItems: "center", padding: 16 }}>
+      <div className="dc-card" style={{ width: "min(520px, 100%)" }}>
+        <h1 style={{ margin: 0, fontSize: 28 }}>Register</h1>
 
-    return (
-        <div className="min-h-screen px-4 pb-28 pt-10">
-            <div className="mx-auto max-w-md">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-semibold text-white">Create your account</h1>
-                    <p className="mt-1 text-white/60">
-                        This helps us keep your SOS and settings secure.
-                    </p>
-                </div>
+        <form onSubmit={onSubmit} style={{ marginTop: 16, display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={{ color: "var(--muted)" }}>Name</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} style={{ padding: 12, borderRadius: 12 }} />
+          </label>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg backdrop-blur-xl">
-                    <form onSubmit={submit} className="space-y-4">
-                        <div>
-                            <label className="text-sm text-white/70">Name</label>
-                            <input
-                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-white outline-none focus:border-white/25"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Luyanda"
-                            />
-                        </div>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={{ color: "var(--muted)" }}>Email</span>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} style={{ padding: 12, borderRadius: 12 }} />
+          </label>
 
-                        <div>
-                            <label className="text-sm text-white/70">Email</label>
-                            <input
-                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-white outline-none focus:border-white/25"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                autoComplete="email"
-                                inputMode="email"
-                                placeholder="you@example.com"
-                            />
-                        </div>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={{ color: "var(--muted)" }}>Password</span>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ padding: 12, borderRadius: 12 }} />
+          </label>
 
-                        <div>
-                            <label className="text-sm text-white/70">Password</label>
-                            <input
-                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-3 text-white outline-none focus:border-white/25"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                autoComplete="new-password"
-                                type="password"
-                                placeholder="At least 8 characters"
-                            />
-                        </div>
-
-                        {err ? (
-                            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                                {err}
-                            </div>
-                        ) : null}
-
-                        <button
-                            type="submit"
-                            disabled={!!loading}
-                            className="w-full rounded-xl bg-white py-3 font-medium text-black transition active:scale-[0.99] disabled:opacity-60"
-                        >
-                            {loading ? "Creating..." : "Create account"}
-                        </button>
-
-                        <p className="text-center text-sm text-white/60">
-                            Already have an account?{" "}
-                            <Link to="/login" className="text-white underline underline-offset-4">
-                                Sign in
-                            </Link>
-                        </p>
-                    </form>
-                </div>
+          {error ? (
+            <div style={{ border: "1px solid rgba(255,59,59,0.35)", background: "rgba(255,59,59,0.08)", padding: 12, borderRadius: 12 }}>
+              {error}
             </div>
-        </div>
-    );
+          ) : null}
+
+          <button className="dc-btn" disabled={loading} type="submit">
+            {loading ? "Creating..." : "Create account"}
+          </button>
+
+          <a href="/login" style={{ textAlign: "center", color: "var(--accent)" }}>Back to sign in</a>
+        </form>
+      </div>
+    </div>
+  );
 }
