@@ -1,52 +1,61 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import BottomNav from "./BottomNav.jsx";
+import BottomNav from "./BottomNav";
+import ProvincePicker from "./ProvincePicker";
+import { useProvince } from "../context/ProvinceContext";
 
 export default function AppShell() {
-    const nav = useNavigate();
+    const { province } = useProvince();
+    const [pickerOpen, setPickerOpen] = useState(false);
     const loc = useLocation();
+    const nav = useNavigate();
 
-    const showNav = !["/login", "/register"].includes(loc.pathname);
+    const hideShell = loc.pathname === "/login" || loc.pathname === "/register";
+
+    if (hideShell) return <Outlet />;
 
     return (
-        <div className="min-h-screen text-white">
-            {/* Background */}
-            <div className="fixed inset-0 -z-10 bg-black" />
-            <div className="fixed inset-0 -z-10 opacity-70"
-                style={{
-                    background:
-                        "radial-gradient(60% 40% at 60% 25%, rgba(120,0,255,0.35), transparent 60%)," +
-                        "radial-gradient(55% 35% at 20% 90%, rgba(0,200,255,0.18), transparent 60%)," +
-                        "linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.98))",
-                }}
-            />
+        <div className="min-h-screen bg-black text-white">
+            {/* Top bar */}
+            <div className="sticky top-0 z-30">
+                <div
+                    className="mx-auto max-w-[520px] px-4 pt-4"
+                    style={{ paddingTop: "max(16px, env(safe-area-inset-top))" }}
+                >
+                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
+                        <div className="font-semibold">DC Emergency</div>
+                        <button
+                            onClick={() => setPickerOpen(true)}
+                            className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white/90"
+                            title="Change province"
+                        >
+                            {province?.name || "Select province"}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-            {/* Page container */}
-            <div className="mx-auto w-full max-w-[430px] px-4 pb-28 pt-4">
+            {/* Page */}
+            <div className="mx-auto max-w-[520px] px-4 pb-28 pt-4">
                 <Outlet />
             </div>
 
-            {/* Floating SOS (always available) */}
-            {showNav && (
-                <button
-                    onClick={() => nav("/sos")}
-                    className={[
-                        "fixed z-50",
-                        "right-6 bottom-24",
-                        "h-16 w-16 rounded-full",
-                        "bg-red-600/80 hover:bg-red-600",
-                        "backdrop-blur-xl border border-white/20",
-                        "shadow-[0_16px_40px_rgba(0,0,0,0.55)]",
-                        "active:scale-95 transition",
-                        "flex items-center justify-center",
-                    ].join(" ")}
-                    aria-label="SOS"
-                >
-                    <span className="text-sm font-extrabold tracking-wide">SOS</span>
-                </button>
-            )}
+            {/* Floating SOS always accessible */}
+            <button
+                onClick={() => nav("/sos")}
+                className="fixed z-50 right-5 bottom-24 w-20 h-20 rounded-full bg-red-500/90 border border-white/15 shadow-[0_0_60px_rgba(239,68,68,.35)] active:scale-[0.98] transition"
+                style={{
+                    right: "max(20px, env(safe-area-inset-right))",
+                    bottom: "max(96px, calc(96px + env(safe-area-inset-bottom)))"
+                }}
+                aria-label="Open SOS"
+            >
+                <div className="font-black text-center tracking-wider">SOS</div>
+                <div className="-mt-0.5 text-[10px] text-white/90">Emergency</div>
+            </button>
 
-            {showNav && <BottomNav />}
+            <BottomNav />
+            <ProvincePicker open={pickerOpen} onClose={() => setPickerOpen(false)} />
         </div>
     );
 }

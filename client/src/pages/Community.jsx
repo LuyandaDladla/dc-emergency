@@ -1,122 +1,126 @@
 ﻿import React, { useMemo, useState } from "react";
-import { MessageCircle, Users, MapPin, Flame } from "lucide-react";
-
-function cx(...c) { return c.filter(Boolean).join(" "); }
-
-const DEMO_POSTS = [
-    { id: 1, scope: "National", author: "Anonymous", time: "Just now", text: "You�re not alone. Share resources and support here.", tag: "Support" },
-    { id: 2, scope: "Gauteng", author: "Anonymous", time: "10m ago", text: "Any safe shelters near Johannesburg CBD? (Demo)", tag: "Help" },
-    { id: 3, scope: "Western Cape", author: "Anonymous", time: "1h ago", text: "Reminder: Trust your instincts. Leave early if you feel unsafe.", tag: "Advice" },
-];
+import { useProvince } from "../context/ProvinceContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Community() {
-    const province = useMemo(() => localStorage.getItem("dc_province") || "", []);
-    const [tab, setTab] = useState("local"); // local | national
+    const { province } = useProvince();
+    const { user } = useAuth();
+    const [tab, setTab] = useState("feed"); // feed | chat
     const [text, setText] = useState("");
 
-    const filtered = useMemo(() => {
-        if (tab === "national") return DEMO_POSTS.filter(p => p.scope === "National");
-        if (province) return DEMO_POSTS.filter(p => p.scope === province);
-        return DEMO_POSTS.filter(p => p.scope !== "National");
-    }, [tab, province]);
+    const seed = useMemo(() => {
+        const p = province?.name || "your area";
+        return [
+            { by: "DC Academy", text: `Welcome to the ${p} community space. Stay safe.` },
+            { by: "Moderator", text: "This is a demo: messages are not stored permanently yet." }
+        ];
+    }, [province]);
 
-    function post() {
+    const [msgs, setMsgs] = useState(seed);
+
+    function send() {
         const t = text.trim();
         if (!t) return;
-        alert("Demo mode: posting saved later. For tomorrow�s demo this shows UI only.");
+        const by = user?.name || user?.email || "Anonymous";
+        setMsgs((m) => [...m, { by, text: t }]);
         setText("");
+
+        // Demo bot reply
+        setTimeout(() => {
+            setMsgs((m) => [
+                ...m,
+                { by: "Support Bot", text: "Thanks for sharing. If you’re in danger, use SOS immediately." }
+            ]);
+        }, 500);
     }
 
     return (
-        <div className="pt-6">
-            <div className="rounded-2xl border border-white/10 bg-white/6 p-5 shadow-2xl shadow-black/40 backdrop-blur-2xl">
-                <div className="flex items-start justify-between gap-3">
-                    <div>
-                        <div className="text-2xl font-semibold">Community</div>
-                        <div className="mt-1 text-sm text-white/70">
-                            {tab === "local" ? "Location-based support and updates" : "National space for everyone"}
-                        </div>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white/80">
-                        <span className="inline-flex items-center gap-1">
-                            <MapPin size={14} />
-                            {province || "No province"}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Tabs */}
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setTab("local")}
-                        className={cx(
-                            "rounded-xl border px-4 py-3 text-sm font-semibold transition",
-                            tab === "local"
-                                ? "border-white/15 bg-white/12"
-                                : "border-white/10 bg-black/25 hover:bg-black/35"
-                        )}
-                    >
-                        <span className="inline-flex items-center gap-2"><Users size={16} />Local</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setTab("national")}
-                        className={cx(
-                            "rounded-xl border px-4 py-3 text-sm font-semibold transition",
-                            tab === "national"
-                                ? "border-white/15 bg-white/12"
-                                : "border-white/10 bg-black/25 hover:bg-black/35"
-                        )}
-                    >
-                        <span className="inline-flex items-center gap-2"><MessageCircle size={16} />National</span>
-                    </button>
-                </div>
-
-                {/* Composer */}
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
-                    <div className="text-sm font-semibold">Post anonymously (demo)</div>
-                    <textarea
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        placeholder="Share advice, ask for help, report a hotspot�"
-                        className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-white/10 min-h-[90px]"
-                    />
-                    <button
-                        type="button"
-                        onClick={post}
-                        className="mt-3 w-full rounded-xl border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold transition hover:bg-white/12"
-                    >
-                        Post
-                    </button>
-                    <div className="mt-2 text-xs text-white/60">
-                        Next: moderation + NGO accounts + emergency escalation.
-                    </div>
-                </div>
-
-                {/* Feed */}
-                <div className="mt-4 space-y-3">
-                    {filtered.length === 0 ? (
-                        <div className="rounded-2xl border border-white/10 bg-black/25 p-5 text-sm text-white/70">
-                            No posts for this area yet (demo).
-                        </div>
-                    ) : (
-                        filtered.map((p) => (
-                            <div key={p.id} className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="text-sm font-semibold">{p.author}</div>
-                                    <div className="text-xs text-white/60">{p.time}</div>
-                                </div>
-                                <div className="mt-1 text-xs text-white/60">{p.scope}</div>
-                                <div className="mt-3 text-sm text-white/85">{p.text}</div>
-                                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-white/70">
-                                    <Flame size={14} className="text-white/70" /> {p.tag}
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+        <div>
+            <div className="flex items-center justify-between">
+                <h1 className="text-xl font-semibold">Community</h1>
+                <div className="text-xs text-white/70">{province?.name}</div>
             </div>
+
+            <div className="mt-3 flex gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 backdrop-blur-xl">
+                <button
+                    className={[
+                        "flex-1 rounded-xl py-2 text-sm",
+                        tab === "feed" ? "bg-white/10" : "hover:bg-white/5"
+                    ].join(" ")}
+                    onClick={() => setTab("feed")}
+                >
+                    Feed
+                </button>
+                <button
+                    className={[
+                        "flex-1 rounded-xl py-2 text-sm",
+                        tab === "chat" ? "bg-white/10" : "hover:bg-white/5"
+                    ].join(" ")}
+                    onClick={() => setTab("chat")}
+                >
+                    Live chat (demo)
+                </button>
+            </div>
+
+            {tab === "feed" ? (
+                <div className="mt-4 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-2xl">
+                    <div className="font-semibold">Local updates</div>
+                    <div className="mt-2 text-sm text-white/80">
+                        No verified posts yet for this province (demo).
+                    </div>
+                    <div className="mt-3 text-xs text-white/60">
+                        Next phase: NGO verified posts + moderated reporting.
+                    </div>
+                </div>
+            ) : (
+                <div className="mt-4">
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-2xl">
+                        <div className="flex items-center justify-between">
+                            <div className="font-semibold">Support room</div>
+                            <a
+                                href="mailto:dcacademy@example.com?subject=DC%20Emergency%20Support%20Request"
+                                className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs"
+                            >
+                                Contact live agent (email)
+                            </a>
+                        </div>
+
+                        <div className="mt-3 max-h-[50vh] space-y-2 overflow-auto pr-1">
+                            {msgs.map((m, i) => (
+                                <div
+                                    key={i}
+                                    className="rounded-2xl border border-white/10 bg-black/30 px-3 py-2"
+                                >
+                                    <div className="text-xs text-white/60">{m.by}</div>
+                                    <div className="text-sm text-white/90">{m.text}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-3 flex gap-2">
+                            <input
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                className="flex-1 rounded-2xl bg-black/30 border border-white/10 px-3 py-3 outline-none"
+                                placeholder="Type a message…"
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") send();
+                                }}
+                            />
+                            <button
+                                onClick={send}
+                                className="rounded-2xl bg-white px-4 font-semibold text-black"
+                            >
+                                Send
+                            </button>
+                        </div>
+
+                        <div className="mt-2 text-xs text-white/60">
+                            Demo only. Next phase: real-time websocket chat + moderation.
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
