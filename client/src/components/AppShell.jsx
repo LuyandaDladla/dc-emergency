@@ -1,61 +1,70 @@
-﻿import React, { useState } from "react";
+﻿import React from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import BottomNav from "./BottomNav";
-import ProvincePicker from "./ProvincePicker";
-import { useProvince } from "../context/ProvinceContext";
+
+function cls(...a) {
+    return a.filter(Boolean).join(" ");
+}
 
 export default function AppShell() {
-    const { province } = useProvince();
-    const [pickerOpen, setPickerOpen] = useState(false);
-    const loc = useLocation();
     const nav = useNavigate();
+    const location = useLocation();
 
-    const hideShell = loc.pathname === "/login" || loc.pathname === "/register";
-
-    if (hideShell) return <Outlet />;
+    const isAuth =
+        location.pathname.startsWith("/login") ||
+        location.pathname.startsWith("/register");
 
     return (
-        <div className="min-h-screen bg-black text-white">
-            {/* Top bar */}
-            <div className="sticky top-0 z-30">
-                <div
-                    className="mx-auto max-w-[520px] px-4 pt-4"
-                    style={{ paddingTop: "max(16px, env(safe-area-inset-top))" }}
-                >
-                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
-                        <div className="font-semibold">DC Emergency</div>
-                        <button
-                            onClick={() => setPickerOpen(true)}
-                            className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white/90"
-                            title="Change province"
-                        >
-                            {province?.name || "Select province"}
-                        </button>
-                    </div>
-                </div>
+        <div className={cls("relative min-h-screen text-white dc-noise")}>
+            {/* Background */}
+            <div className="fixed inset-0 -z-10 bg-black">
+                <div className="dc-bg absolute inset-0" />
             </div>
 
-            {/* Page */}
-            <div className="mx-auto max-w-[520px] px-4 pb-28 pt-4">
+            {/* Content container */}
+            <div
+                className={cls(
+                    "mx-auto w-full max-w-md px-4",
+                    isAuth ? "pt-10 pb-10" : "pt-5 pb-28"
+                )}
+                style={{
+                    paddingBottom: isAuth
+                        ? "max(2.5rem, env(safe-area-inset-bottom))"
+                        : "calc(max(6.5rem, env(safe-area-inset-bottom)) + 22px)",
+                }}
+            >
                 <Outlet />
             </div>
 
-            {/* Floating SOS always accessible */}
-            <button
-                onClick={() => nav("/sos")}
-                className="fixed z-50 right-5 bottom-24 w-20 h-20 rounded-full bg-red-500/90 border border-white/15 shadow-[0_0_60px_rgba(239,68,68,.35)] active:scale-[0.98] transition"
-                style={{
-                    right: "max(20px, env(safe-area-inset-right))",
-                    bottom: "max(96px, calc(96px + env(safe-area-inset-bottom)))"
-                }}
-                aria-label="Open SOS"
-            >
-                <div className="font-black text-center tracking-wider">SOS</div>
-                <div className="-mt-0.5 text-[10px] text-white/90">Emergency</div>
-            </button>
+            {/* Floating SOS (always accessible) */}
+            {!isAuth && (
+                <button
+                    type="button"
+                    onClick={() => nav("/sos")}
+                    className={cls(
+                        "fixed right-5 z-50",
+                        "dc-press",
+                        "grid place-items-center",
+                        "h-[76px] w-[76px] rounded-full",
+                        "bg-red-500/20 border border-red-200/25",
+                        "backdrop-blur-2xl",
+                        "shadow-[0_24px_70px_rgba(0,0,0,0.65)]"
+                    )}
+                    style={{
+                        bottom: "calc(max(88px, env(safe-area-inset-bottom)) + 14px)",
+                    }}
+                    aria-label="Open SOS"
+                    title="SOS"
+                >
+                    <div className="select-none text-center">
+                        <div className="text-lg font-extrabold tracking-tight">SOS</div>
+                        <div className="-mt-0.5 text-[10px] text-white/80">Emergency</div>
+                    </div>
+                </button>
+            )}
 
-            <BottomNav />
-            <ProvincePicker open={pickerOpen} onClose={() => setPickerOpen(false)} />
+            {/* Bottom nav */}
+            {!isAuth && <BottomNav />}
         </div>
     );
 }

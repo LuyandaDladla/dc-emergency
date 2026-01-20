@@ -2,91 +2,98 @@
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
-  const nav = useNavigate();
+    const nav = useNavigate();
 
-  return (
-    <div className="mx-auto max-w-md px-4 pb-28 pt-5">
-      {/* Header */}
-      <div className="mb-4">
-        <div className="text-xl font-semibold text-white">Home</div>
-        <div className="text-sm text-white/70">
-          Quick access to safety tools and support.
-        </div>
-      </div>
-
-      {/* Primary SOS */}
-      <button
-        type="button"
-        onClick={() => nav("/sos")}
-        className="w-full rounded-3xl p-4 active:scale-[0.99] transition"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(220,38,38,0.98), rgba(127,29,29,0.98))",
-          boxShadow:
-            "0 14px 40px rgba(220,38,38,0.25), inset 0 0 0 1px rgba(255,255,255,0.08)",
-        }}
-        aria-label="Open SOS"
-      >
-        <div className="flex items-center justify-between">
-          <div className="text-left">
-            <div className="text-lg font-semibold text-white">SOS</div>
-            <div className="text-sm text-white/80">
-              Tap for emergency help and sharing location
+    return (
+        <div className="mx-auto max-w-md space-y-5">
+            {/* Header */}
+            <div className="dc-glass dc-card p-5">
+                <div className="text-[13px] text-white/60">DC Emergency</div>
+                <div className="mt-1 text-2xl font-semibold tracking-tight">Home</div>
+                <div className="mt-1 text-sm text-white/70">
+                    Quick access to safety tools and support.
+                </div>
             </div>
-          </div>
 
-          {/* Big round icon bubble */}
-          <div
-            className="grid place-items-center rounded-full"
-            style={{
-              width: 56,
-              height: 56,
-              background: "rgba(0,0,0,0.25)",
-              border: "1px solid rgba(255,255,255,0.18)",
-            }}
-          >
-            <span style={{ fontSize: 22, lineHeight: 1 }}>🚨</span>
-          </div>
+            {/* BIG SOS BUTTON (Home main feature) */}
+            <button
+                type="button"
+                onClick={() => nav("/sos")}
+                className="w-full dc-press"
+                aria-label="Open SOS"
+            >
+                <div
+                    className="dc-card p-5"
+                    style={{
+                        background:
+                            "linear-gradient(135deg, rgba(255,59,48,0.95), rgba(138,18,18,0.95))",
+                        boxShadow:
+                            "0 22px 65px rgba(255,59,48,0.24), inset 0 0 0 1px rgba(255,255,255,0.14)",
+                    }}
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="text-left">
+                            <div className="text-xl font-extrabold tracking-tight">SOS</div>
+                            <div className="mt-1 text-sm text-white/90">
+                                Tap to alert + share your location
+                            </div>
+                            <div className="mt-2 text-xs text-white/80">
+                                Always available via the floating button too.
+                            </div>
+                        </div>
+
+                        <div
+                            className="grid place-items-center rounded-full"
+                            style={{
+                                width: 74,
+                                height: 74,
+                                background: "rgba(0,0,0,0.22)",
+                                border: "1px solid rgba(255,255,255,0.20)",
+                            }}
+                        >
+                            <span style={{ fontSize: 26, lineHeight: 1 }}>🚨</span>
+                        </div>
+                    </div>
+                </div>
+            </button>
+
+            {/* Quick actions */}
+            <div className="grid grid-cols-2 gap-3">
+                <button
+                    type="button"
+                    onClick={() => nav("/community")}
+                    className="dc-glass-soft dc-card p-4 text-left dc-press"
+                >
+                    <div className="font-semibold">Community</div>
+                    <div className="mt-1 text-xs text-white/70">Stories & support</div>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => nav("/therapist")}
+                    className="dc-glass-soft dc-card p-4 text-left dc-press"
+                >
+                    <div className="font-semibold">AI Therapist</div>
+                    <div className="mt-1 text-xs text-white/70">Guided help</div>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => nav("/risk")}
+                    className="dc-glass-soft dc-card p-4 text-left dc-press"
+                >
+                    <div className="font-semibold">Risk Check</div>
+                    <div className="mt-1 text-xs text-white/70">Quick assessment</div>
+                </button>
+
+                <a
+                    href="tel:112"
+                    className="dc-glass-soft dc-card dc-press block p-4 text-left"
+                >
+                    <div className="font-semibold">Call 112</div>
+                    <div className="mt-1 text-xs text-white/70">SA emergency</div>
+                </a>
+            </div>
         </div>
-      </button>
-
-      {/* Quick actions (demo) */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => nav("/community")}
-          className="rounded-2xl p-4 text-left bg-white/5 border border-white/10 hover:bg-white/7 active:scale-[0.99] transition"
-        >
-          <div className="font-medium text-white">Community</div>
-          <div className="mt-1 text-xs text-white/70">Stories & support</div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => nav("/therapist")}
-          className="rounded-2xl p-4 text-left bg-white/5 border border-white/10 hover:bg-white/7 active:scale-[0.99] transition"
-        >
-          <div className="font-medium text-white">AI Therapist</div>
-          <div className="mt-1 text-xs text-white/70">Guided help (demo)</div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => nav("/risk")}
-          className="rounded-2xl p-4 text-left bg-white/5 border border-white/10 hover:bg-white/7 active:scale-[0.99] transition"
-        >
-          <div className="font-medium text-white">Risk Check</div>
-          <div className="mt-1 text-xs text-white/70">Quick assessment</div>
-        </button>
-
-        <a
-          href="tel:112"
-          className="block rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition hover:bg-white/7 active:scale-[0.99]"
-        >
-          <div className="font-medium text-white">Call 112</div>
-          <div className="mt-1 text-xs text-white/70">SA emergency</div>
-        </a>
-      </div>
-    </div>
-  );
+    );
 }
