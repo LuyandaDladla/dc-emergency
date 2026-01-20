@@ -1,96 +1,80 @@
 ﻿import React from "react";
 import { NavLink } from "react-router-dom";
 
-const Icon = ({ children }) => (
-    <span className="inline-flex h-6 w-6 items-center justify-center">{children}</span>
-);
+function Icon({ name }) {
+    const common = "w-5 h-5";
+    // tiny inline SVG set (no lucide-react dependency)
+    switch (name) {
+        case "home":
+            return (
+                <svg className={common} viewBox="0 0 24 24" fill="none">
+                    <path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10.5Z" stroke="currentColor" strokeWidth="1.6" />
+                </svg>
+            );
+        case "sos":
+            return (
+                <svg className={common} viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2v4M12 18v4M4 12H2M22 12h-2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    <path d="M12 7a5 5 0 1 0 0 10a5 5 0 0 0 0-10Z" stroke="currentColor" strokeWidth="1.6" />
+                </svg>
+            );
+        case "community":
+            return (
+                <svg className={common} viewBox="0 0 24 24" fill="none">
+                    <path d="M16 11a4 4 0 1 0-8 0" stroke="currentColor" strokeWidth="1.6" />
+                    <path d="M4 21c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+            );
+        case "risk":
+            return (
+                <svg className={common} viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2 3 6v7c0 5 4 8.5 9 9 5-0.5 9-4 9-9V6l-9-4Z" stroke="currentColor" strokeWidth="1.6" />
+                    <path d="M12 8v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    <path d="M12 16h.01" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+            );
+        case "profile":
+            return (
+                <svg className={common} viewBox="0 0 24 24" fill="none">
+                    <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" stroke="currentColor" strokeWidth="1.6" />
+                    <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+            );
+        default:
+            return null;
+    }
+}
 
-function Item({ to, label, icon }) {
+function Item({ to, icon, label }) {
     return (
         <NavLink
             to={to}
             className={({ isActive }) =>
                 [
                     "flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-xl",
-                    "text-[11px] leading-none",
-                    isActive ? "text-white" : "text-white/70 hover:text-white",
+                    isActive ? "text-white" : "text-white/70 hover:text-white"
                 ].join(" ")
             }
         >
-            <Icon>{icon}</Icon>
-            <span>{label}</span>
+            <Icon name={icon} />
+            <span className="leading-none text-[11px]">{label}</span>
         </NavLink>
     );
 }
 
 export default function BottomNav() {
     return (
-        <nav
-            className={[
-                "fixed bottom-3 left-1/2 -translate-x-1/2 z-40",
-                "w-[min(430px,calc(100vw-24px))]",
-                "backdrop-blur-xl bg-white/10 border border-white/15",
-                "shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
-                "rounded-2xl px-3 py-2",
-            ].join(" ")}
-            style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        <div
+            className="-translate-x-1/2 w-[min(420px,calc(100%-1.5rem))] fixed bottom-4 left-1/2 z-40"
+            style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
         >
-            <div className="grid grid-cols-5 items-center">
-                <Item
-                    to="/"
-                    label="Home"
-                    icon={
-                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M3 10.5 12 3l9 7.5" />
-                            <path d="M5 10v10h14V10" />
-                        </svg>
-                    }
-                />
-                <Item
-                    to="/sos"
-                    label="SOS"
-                    icon={
-                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M12 21s7-4.6 7-11a7 7 0 0 0-14 0c0 6.4 7 11 7 11Z" />
-                            <path d="M12 11v4" />
-                            <path d="M12 8h.01" />
-                        </svg>
-                    }
-                />
-                <Item
-                    to="/community"
-                    label="Community"
-                    icon={
-                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                    }
-                />
-                <Item
-                    to="/risk"
-                    label="Risk"
-                    icon={
-                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M12 2 2 7l10 5 10-5-10-5Z" />
-                            <path d="M2 17l10 5 10-5" />
-                            <path d="M2 12l10 5 10-5" />
-                        </svg>
-                    }
-                />
-                <Item
-                    to="/profile"
-                    label="Profile"
-                    icon={
-                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M20 21a8 8 0 1 0-16 0" />
-                            <path d="M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-                        </svg>
-                    }
-                />
+            <div className="flex items-stretch justify-between rounded-2xl border border-white/10 bg-black/55 px-3 py-2 shadow-lg backdrop-blur-xl">
+                <Item to="/" icon="home" label="Home" />
+                <Item to="/sos" icon="sos" label="SOS" />
+                <Item to="/community" icon="community" label="Community" />
+                <Item to="/risk" icon="risk" label="Risk" />
+                <Item to="/profile" icon="profile" label="Profile" />
             </div>
-        </nav>
+        </div>
     );
 }

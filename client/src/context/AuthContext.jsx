@@ -1,36 +1,49 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import api, { setAuthToken, getAuthToken, tryGet, tryPost } from "../services/api.js";
+import api, { setAuthToken, getAuthToken, tryGet, tryPost } from "../services/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    const [token, setToken] = useState(getAuthToken());
+    const [token, setToken] = useState(() => getAuthToken());
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    async function refreshMe() {
-        if (!getAuthToken()) {
+    async function refreshMe(tk = token) {
+        if (!tk) {
             setUser(null);
-            return null;
+            setLoading(false);
+            return;
         }
-        const res = await tryGet("/users/me");
-        setUser(res?.user || null);
-        return res?.user || null;
+        try {
+            setAuthToken(tk);
+            const res = await tryGet("/users/me");
+            setUser(res?.user || null);
+        } catch {
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function login(email, password) {
         const res = await tryPost("/auth/login", { email, password });
-        setAuthToken(res?.token);
-        setToken(res?.token || null);
-        await refreshMe();
+        const tk = res?.token;
+        if (!tk) throw new Error("No token returned");
+        setAuthToken(tk);
+        setToken(tk);
+        await refreshMe(tk);
         return true;
     }
 
     async function register(name, email, password) {
+        // register is under /users/register in your backend
         const res = await tryPost("/users/register", { name, email, password });
-        setAuthToken(res?.token);
-        setToken(res?.token || null);
-        await refreshMe();
+        const tk = res?.token;
+        if (tk) {
+            setAuthToken(tk);
+            setToken(tk);
+            await refreshMe(tk);
+        }
         return true;
     }
 
@@ -41,21 +54,19 @@ export function AuthProvider({ children }) {
     }
 
     useEffect(() => {
-        (async () => {
-            try {
-                await refreshMe();
-            } catch {
-                setAuthToken(null);
-                setToken(null);
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        })();
+        refreshMe(token);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const value = useMemo(
-        () => ({ token, user, loading, login, register, logout, refreshMe, apiBase: api.base }),
+        () => ({
+            token,
+            user,
+            loading,
+            login,
+            register,
+            logout
+        }),
         [token, user, loading]
     );
 
