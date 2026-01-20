@@ -1,70 +1,60 @@
 ﻿import React from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import BottomNav from "./BottomNav";
+import { useProvince } from "../context/ProvinceContext";
 
-function cls(...a) {
-    return a.filter(Boolean).join(" ");
-}
-
-export default function AppShell() {
+export default function AppShell({ children }) {
     const nav = useNavigate();
-    const location = useLocation();
+    const loc = useLocation();
+    const { provinceLabel, openPicker, locStatus } = useProvince();
 
-    const isAuth =
-        location.pathname.startsWith("/login") ||
-        location.pathname.startsWith("/register");
+    const showChrome = !["/login", "/register"].includes(loc.pathname);
 
     return (
-        <div className={cls("relative min-h-screen text-white dc-noise")}>
-            {/* Background */}
-            <div className="fixed inset-0 -z-10 bg-black">
-                <div className="dc-bg absolute inset-0" />
-            </div>
+        <div className="bg-premium min-h-screen">
+            <div className="mx-auto min-h-screen max-w-md px-4 pb-28 pt-4">
+                {showChrome && (
+                    <header className="glass flex items-center justify-between rounded-3xl px-4 py-3">
+                        <div className="font-semibold tracking-tight">DC Emergency</div>
 
-            {/* Content container */}
-            <div
-                className={cls(
-                    "mx-auto w-full max-w-md px-4",
-                    isAuth ? "pt-10 pb-10" : "pt-5 pb-28"
+                        <button
+                            className="btn px-3 py-2 text-xs"
+                            onClick={openPicker}
+                            title="Change province"
+                        >
+                            {locStatus === "idle" ? "Detecting…" : provinceLabel}
+                        </button>
+                    </header>
                 )}
-                style={{
-                    paddingBottom: isAuth
-                        ? "max(2.5rem, env(safe-area-inset-bottom))"
-                        : "calc(max(6.5rem, env(safe-area-inset-bottom)) + 22px)",
-                }}
-            >
-                <Outlet />
+
+                <main className="pt-5">{children}</main>
             </div>
 
-            {/* Floating SOS (always accessible) */}
-            {!isAuth && (
-                <button
-                    type="button"
-                    onClick={() => nav("/sos")}
-                    className={cls(
-                        "fixed right-5 z-50",
-                        "dc-press",
-                        "grid place-items-center",
-                        "h-[76px] w-[76px] rounded-full",
-                        "bg-red-500/20 border border-red-200/25",
-                        "backdrop-blur-2xl",
-                        "shadow-[0_24px_70px_rgba(0,0,0,0.65)]"
-                    )}
-                    style={{
-                        bottom: "calc(max(88px, env(safe-area-inset-bottom)) + 14px)",
-                    }}
-                    aria-label="Open SOS"
-                    title="SOS"
-                >
-                    <div className="select-none text-center">
-                        <div className="text-lg font-extrabold tracking-tight">SOS</div>
-                        <div className="-mt-0.5 text-[10px] text-white/80">Emergency</div>
-                    </div>
-                </button>
-            )}
+            {showChrome && (
+                <>
+                    {/* Floating SOS always accessible */}
+                    <button
+                        onClick={() => nav("/sos")}
+                        className="fixed right-5 z-50 sos-ring"
+                        style={{
+                            bottom: "calc(88px + env(safe-area-inset-bottom))",
+                            width: 74,
+                            height: 74,
+                            borderRadius: 999,
+                            background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.35), transparent 55%), #ff2f45",
+                            border: "1px solid rgba(255,255,255,0.18)",
+                            color: "white",
+                        }}
+                    >
+                        <div className="flex flex-col items-center justify-center leading-none">
+                            <div className="text-lg font-extrabold">SOS</div>
+                            <div className="text-[10px] opacity-90">Emergency</div>
+                        </div>
+                    </button>
 
-            {/* Bottom nav */}
-            {!isAuth && <BottomNav />}
+                    <BottomNav />
+                </>
+            )}
         </div>
     );
 }

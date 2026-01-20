@@ -1,34 +1,82 @@
 ﻿import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import AppShell from "./components/AppShell";
+import AppShell from "./components/AppShell.jsx";
 
-import Home from "./pages/Home";
-import SOS from "./pages/SOS";
-import Community from "./pages/Community";
-import Hotspots from "./pages/Hotspots";
-import Risk from "./pages/Risk";
-import Profile from "./pages/Profile";
-import Admin from "./pages/Admin";
-
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Home from "./pages/Home.jsx";
+import SOS from "./pages/SOS.jsx";
+import Community from "./pages/Community.jsx";
+import Hotspots from "./pages/Hotspots.jsx";
+import Risk from "./pages/Risk.jsx";
+import Therapist from "./pages/Therapist.jsx";
+import Profile from "./pages/Profile.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
 
 export default function App() {
     return (
         <Routes>
-            <Route element={<AppShell />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/sos" element={<SOS />} />
-                <Route path="/community" element={<Community />} />
-                <Route path="/hotspots" element={<Hotspots />} />
-                <Route path="/risk" element={<Risk />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/admin" element={<Admin />} />
-            </Route>
-
+            {/* Auth */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
+            {/* App */}
+            <Route
+                path="/"
+                element={
+                    <AppShell>
+                        <Home />
+                    </AppShell>
+                }
+            />
+            <Route
+                path="/sos"
+                element={
+                    <AppShell>
+                        <SOS />
+                    </AppShell>
+                }
+            />
+            <Route
+                path="/community"
+                element={
+                    <AppShell>
+                        <Community />
+                    </AppShell>
+                }
+            />
+            <Route
+                path="/hotspots"
+                element={
+                    <AppShell>
+                        <Hotspots />
+                    </AppShell>
+                }
+            />
+            <Route
+                path="/risk"
+                element={
+                    <AppShell>
+                        <Risk />
+                    </AppShell>
+                }
+            />
+            <Route
+                path="/therapist"
+                element={
+                    <AppShell>
+                        <Therapist />
+                    </AppShell>
+                }
+            />
+            <Route
+                path="/profile"
+                element={
+                    <AppShell>
+                        <Profile />
+                    </AppShell>
+                }
+            />
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
