@@ -1,167 +1,169 @@
-﻿import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLiveLocation } from "../hooks/useLiveLocation";
+﻿// client/src/pages/Community.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { tryGet, tryPost } from "../services/api";
+import { useProvince } from "../context/ProvinceContext";
 
-function Card({ children, className = "" }) {
-    return (
-        <div className={`rounded-3xl border border-white/10 bg-black/60 backdrop-blur-xl ${className}`}>
-            {children}
-        </div>
-    );
+function timeAgo(iso) {
+    const t = new Date(iso).getTime();
+    const s = Math.max(1, Math.floor((Date.now() - t) / 1000));
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h`;
+    const d = Math.floor(h / 24);
+    return `${d}d`;
 }
 
 export default function Community() {
-    const nav = useNavigate();
-    const { province } = useLiveLocation();
-
-    const [scope, setScope] = useState("nearby"); // nearby | national
-    const [anonymous, setAnonymous] = useState(true);
+    const { province, coords } = useProvince();
+    const [scope, setScope] = useState("forYou"); // forYou | province
     const [text, setText] = useState("");
+    const [items, setItems] = useState([]);
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState("");
 
-    const scopeLabel = useMemo(() => {
-        if (scope === "national") return "National feed";
-        return province ? `Nearby · ${province}` : "Nearby · your area";
+    const feedQuery = useMemo(() => {
+        if (scope === "province" && province) return `/community/feed?scope=province&province=${encodeURIComponent(province)}`;
+        return `/community/feed?scope=forYou`;
     }, [scope, province]);
 
-    const [posts, setPosts] = useState([
-        {
-            id: "p1",
-            author: "Anonymous",
-            scope: "national",
-            time: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-            text: "If you feel unsafe, use SOS immediately. You are not alone.",
-        },
-        {
-            id: "p2",
-            author: "Community Volunteer",
-            scope: "nearby",
-            time: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-            text: "Reminder: keep your emergency contacts updated and share your safety plan.",
-        },
-    ]);
+    async function load() {
+        setErr("");
+        try {
+            const r = await tryGet(feedQuery);
+            setItems(r.items || []);
+        } catch (e) {
+            setErr(e.message || "Failed to load feed");
+        }
+    }
 
-    const filtered = useMemo(() => {
-        return posts.filter((p) => (scope === "national" ? p.scope === "national" : true));
-    }, [posts, scope]);
+    useEffect(() => {
+        load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [feedQuery]);
 
-    function submit() {
-        const clean = text.trim();
-        if (!clean) return;
+    async function createPost() {
+        const t = text.trim();
+        if (!t) return;
+        setBusy(true);
+        setErr("");
+        try {
+            await tryPost("/community/posts", {
+                text: t,
+                lat: coords?.lat,
+                lng: coords?.lng,
+                displayName: "Anonymous",
+            });
+            setText("");
+            await load();
+        } catch (e) {
+            setErr(e.message || "Failed to post");
+        } finally {
+            setBusy(false);
+        }
+    }
 
-        setPosts((p) => [
-            {
-                id: cryptoId(),
-                author: anonymous ? "Anonymous" : "User",
-                scope: scope === "national" ? "national" : "nearby",
-                time: new Date().toISOString(),
-                text: clean.slice(0, 800),
-            },
-            ...p,
-        ]);
-        setText("");
+    async function like(id) {
+        try {
+            await tryPost(`/community/posts/${id}/like`, {});
+            await load();
+        } catch { }
+    }
+
+    async function repost(id) {
+        try {
+            await tryPost(`/community/posts/${id}/repost`, {});
+            await load();
+        } catch { }
+    }
+
+    async function report(id) {
+        const reason = prompt("Report reason (e.g. harassment, violence, spam):", "harassment");
+        if (!reason) return;
+        try {
+            await tryPost(`/community/posts/${id}/report`, { reason });
+            alert("Reported. Thank you.");
+        } catch (e) {
+            alert(e.message || "Failed to report");
+        }
     }
 
     return (
-        <div className="px-4 pb-24 pt-4">
-            <Card className="p-4">
-                <div className="flex items-start justify-between gap-3">
+        <div className="p-4 pb-28">
+            <div className="glass rounded-3xl p-4">
+                <div className="flex items-center justify-between gap-2">
                     <div>
-                        <div className="text-lg font-semibold text-white">Community</div>
-                        <div className="mt-1 text-sm text-white/60">{scopeLabel}</div>
+                        <div className="text-lg font-semibold">Community</div>
+                        <div className="text-xs text-white/60">
+                            {scope === "province" ? `Province: ${province || "Unknown"}` : "For You"}
+                        </div>
                     </div>
 
                     <div className="flex gap-2">
                         <button
-                            className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white"
-                            onClick={() => nav("/chat")}
+                            className={`px-3 py-2 rounded-xl text-sm ${scope === "forYou" ? "bg-white/15" : "bg-white/5"}`}
+                            onClick={() => setScope("forYou")}
                         >
-                            Live Chat
+                            For You
                         </button>
                         <button
-                            className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white"
-                            onClick={() => nav("/hotspots")}
+                            className={`px-3 py-2 rounded-xl text-sm ${scope === "province" ? "bg-white/15" : "bg-white/5"}`}
+                            onClick={() => setScope("province")}
                         >
-                            Hotspots
+                            Province
                         </button>
                     </div>
                 </div>
 
-                <div className="mt-4 flex gap-2">
-                    <button
-                        onClick={() => setScope("nearby")}
-                        className={`flex-1 py-2 rounded-2xl border text-sm ${scope === "nearby"
-                                ? "bg-white text-black border-white"
-                                : "bg-white/5 text-white border-white/10"
-                            }`}
-                    >
-                        Nearby
-                    </button>
-                    <button
-                        onClick={() => setScope("national")}
-                        className={`flex-1 py-2 rounded-2xl border text-sm ${scope === "national"
-                                ? "bg-white text-black border-white"
-                                : "bg-white/5 text-white border-white/10"
-                            }`}
-                    >
-                        National
-                    </button>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <div>
-                        <div className="text-sm font-semibold text-white">Post anonymously</div>
-                        <div className="text-xs text-white/50">Recommended for safety</div>
-                    </div>
-                    <button
-                        onClick={() => setAnonymous((v) => !v)}
-                        className={`w-12 h-7 rounded-full border transition relative ${anonymous ? "bg-emerald-500/80 border-emerald-300/40" : "bg-white/10 border-white/20"
-                            }`}
-                        aria-label="Toggle anonymous"
-                    >
-                        <span
-                            className={`absolute top-0.5 w-6 h-6 rounded-full bg-white transition ${anonymous ? "left-5" : "left-0.5"
-                                }`}
-                        />
-                    </button>
-                </div>
-
-                <div className="mt-3">
-                    <textarea
-                        className="w-full rounded-2xl border border-white/10 bg-black/60 p-3 text-white outline-none"
-                        rows={3}
+                <div className="mt-3 flex gap-2">
+                    <input
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="Share info, ask for help, or post a safety tip…"
+                        placeholder="Share safely… (no personal details)"
+                        className="flex-1 bg-black/30 rounded-2xl px-4 py-3 outline-none"
                     />
                     <button
-                        onClick={submit}
-                        className="mt-2 w-full rounded-2xl bg-white py-3 font-semibold text-black active:scale-[0.99]"
+                        onClick={createPost}
+                        disabled={busy}
+                        className="rounded-2xl bg-white/15 px-4 py-3 active:bg-white/25"
                     >
                         Post
                     </button>
                 </div>
-            </Card>
+
+                {err ? <div className="mt-2 text-sm text-red-300">{err}</div> : null}
+            </div>
 
             <div className="mt-4 space-y-3">
-                {filtered.map((p) => (
-                    <Card key={p.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="font-semibold text-white">{p.author}</div>
-                            <div className="text-xs text-white/50">
-                                {new Date(p.time).toLocaleString()}
+                {items.map((p) => (
+                    <div key={p._id} className="glass rounded-3xl p-4">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <div className="text-sm font-semibold">{p.displayName || "Anonymous"}</div>
+                                <div className="text-xs text-white/60">
+                                    {p.province || "Unknown"} • {timeAgo(p.createdAt)}
+                                </div>
                             </div>
+                            <button className="text-xs text-white/60" onClick={() => report(p._id)}>
+                                Report
+                            </button>
                         </div>
-                        <div className="mt-1 text-xs text-white/60">
-                            {p.scope === "national" ? "National" : "Nearby"}
+
+                        <div className="mt-2 text-sm leading-relaxed">{p.text}</div>
+
+                        <div className="mt-3 flex items-center gap-2">
+                            <button onClick={() => like(p._id)} className="px-3 py-2 rounded-xl bg-white/5">
+                                ❤️ {p.likesCount || 0}
+                            </button>
+                            <button onClick={() => repost(p._id)} className="px-3 py-2 rounded-xl bg-white/5">
+                                🔁 {p.repostCount || 0}
+                            </button>
+                            <div className="ml-auto text-xs text-white/60">Replies: {p.repliesCount || 0}</div>
                         </div>
-                        <div className="mt-2 text-white">{p.text}</div>
-                    </Card>
+                    </div>
                 ))}
             </div>
         </div>
     );
-}
-
-function cryptoId() {
-    return Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2);
 }

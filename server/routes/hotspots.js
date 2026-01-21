@@ -1,31 +1,42 @@
+// server/routes/hotspots.js
 import express from "express";
-import Hotspot from "../models/Hotspot.js";
+import mongoose from "mongoose";
+import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET /api/hotspots
-router.get("/", async (req, res) => {
-    try {
-        const items = await Hotspot.find({}).sort({ updatedAt: -1 }).limit(200);
-        res.json({ ok: true, hotspots: items });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e?.message || "Server error" });
-    }
-});
+const SosEvent = mongoose.model("SosEvent"); // from sos.js model registration
 
-// POST /api/hotspots/seed (demo seed)
-router.post("/seed", async (req, res) => {
+/**
+ * GET /api/hotspots?province=Gauteng&days=30
+ * MVP: counts SOS events by province over a window
+ */
+router.get("/", auth, async (req, res) => {
     try {
-        const seed = [
-            { name: "CBD (Johannesburg)", province: "Gauteng", lat: -26.2041, lng: 28.0473, radiusMeters: 700, riskLevel: "high" },
-            { name: "Durban Central", province: "KwaZulu-Natal", lat: -29.8587, lng: 31.0218, radiusMeters: 600, riskLevel: "high" },
-            { name: "Cape Town CBD", province: "Western Cape", lat: -33.9249, lng: 18.4241, radiusMeters: 650, riskLevel: "medium" },
-        ];
-        await Hotspot.deleteMany({});
-        const created = await Hotspot.insertMany(seed);
-        res.json({ ok: true, count: created.length });
+        const province = (req.query.province || "").toString();
+        const days = Math.min(90, Math.max(1, Number(req.query.days || 30)));
+
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+        const match = { createdAt: { $gte: since } };
+        if (province) match.province = province;
+
+        const agg = await SosEvent.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: "$province",
+                    count: { $sum: 1 },
+                    last: { $max: "$createdAt" },
+                },
+            },
+            { $sort: { count: -1 } },
+            { $limit: 20 },
+        ]);
+
+        return res.json({ ok: true, days, items: agg.map((x) => ({ province: x._id, count: x.count, last: x.last })) });
     } catch (e) {
-        res.status(500).json({ ok: false, error: e?.message || "Server error" });
+        return res.status(500).json({ ok: false, error: e?.message || "Server error" });
     }
 });
 

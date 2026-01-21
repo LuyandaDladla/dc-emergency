@@ -1,6 +1,8 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "https://dc-emergency.onrender.com/api";
+// client/src/services/api.js
+export const API_BASE =
+    import.meta.env.VITE_API_BASE || "https://dc-emergency.onrender.com/api";
 
-let authToken = null;
+let authToken = localStorage.getItem("token") || null;
 
 export function setAuthToken(token) {
     authToken = token || null;
@@ -9,16 +11,12 @@ export function setAuthToken(token) {
 }
 
 export function getAuthToken() {
-    if (authToken) return authToken;
-    const t = localStorage.getItem("token");
-    authToken = t || null;
     return authToken;
 }
 
 async function request(method, path, body) {
     const headers = { "Content-Type": "application/json" };
-    const t = getAuthToken();
-    if (t) headers.Authorization = `Bearer ${t}`;
+    if (authToken) headers.Authorization = "Bearer " + authToken;
 
     const res = await fetch(API_BASE + path, {
         method,
@@ -34,5 +32,6 @@ async function request(method, path, body) {
 
 export const tryGet = (path) => request("GET", path);
 export const tryPost = (path, body) => request("POST", path, body);
+export const tryDelete = (path) => request("DELETE", path);
 
-export default { tryGet, tryPost, setAuthToken, getAuthToken };
+export default { tryGet, tryPost, tryDelete, setAuthToken, getAuthToken };
