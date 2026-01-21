@@ -2,134 +2,101 @@
 
 const ProvinceContext = createContext(null);
 
+// South Africa province keyword mapping (best-effort)
 const PROVINCES = [
-    "Eastern Cape",
-    "Free State",
-    "Gauteng",
-    "KwaZulu-Natal",
-    "Limpopo",
-    "Mpumalanga",
-    "North West",
-    "Northern Cape",
-    "Western Cape",
+    { name: "Eastern Cape", keys: ["eastern cape"] },
+    { name: "Free State", keys: ["free state"] },
+    { name: "Gauteng", keys: ["gauteng"] },
+    { name: "KwaZulu-Natal", keys: ["kwazulu-natal", "kzn", "kwa zulu natal"] },
+    { name: "Limpopo", keys: ["limpopo"] },
+    { name: "Mpumalanga", keys: ["mpumalanga"] },
+    { name: "Northern Cape", keys: ["northern cape"] },
+    { name: "North West", keys: ["north west", "northwest"] },
+    { name: "Western Cape", keys: ["western cape"] },
 ];
 
-// Best-effort SA province guess by lat/lon (approx boxes; good enough for demo)
-function guessProvince(lat, lon) {
-    // Western Cape
-    if (lat < -31.0 && lon > 17.0 && lon < 22.5) return "Western Cape";
-    // Eastern Cape
-    if (lat < -30.0 && lon >= 22.5 && lon < 30.5) return "Eastern Cape";
-    // KZN
-    if (lat < -27.0 && lat > -31.2 && lon >= 28.0 && lon < 33.2) return "KwaZulu-Natal";
-    // Gauteng
-    if (lat < -25.0 && lat > -27.5 && lon >= 27.0 && lon < 29.5) return "Gauteng";
-    // Limpopo
-    if (lat >= -25.0 && lon >= 27.0 && lon < 32.0) return "Limpopo";
-    // Mpumalanga
-    if (lat < -25.0 && lat >= -27.5 && lon >= 29.0 && lon < 32.8) return "Mpumalanga";
-    // North West
-    if (lat < -25.0 && lat > -28.8 && lon >= 23.0 && lon < 27.5) return "North West";
-    // Free State
-    if (lat <= -27.0 && lat > -30.8 && lon >= 24.0 && lon < 29.5) return "Free State";
-    // Northern Cape fallback
-    return "Northern Cape";
+function matchProvince(text = "") {
+    const t = (text || "").toLowerCase();
+    for (const p of PROVINCES) {
+        if (p.keys.some((k) => t.includes(k))) return p.name;
+    }
+    return null;
+}
+
+// Reverse geocode via Nominatim (no API key needed for demo; we’ll rate-limit)
+async function reverseGeocode(lat, lon) {
+    const url =
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+    const res = await fetch(url, {
+        headers: { "Accept": "application/json" },
+    });
+    const data = await res.json().catch(() => ({}));
+    const display = data?.display_name || "";
+    const state = data?.address?.state || "";
+    return { display, state };
 }
 
 export function ProvinceProvider({ children }) {
-    const [province, setProvince] = useState(() => localStorage.getItem("province") || "KwaZulu-Natal");
-    const [pickerOpen, setPickerOpen] = useState(false);
-    const [locStatus, setLocStatus] = useState("idle"); // idle | ok | denied | error
     const [coords, setCoords] = useState(null);
+    const [province, setProvince] = useState(localStorage.getItem("dc_province") || "");
+    const [locStatus, setLocStatus] = useState("idle"); // idle | ok | denied | error
 
-    useEffect(() => {
-        localStorage.setItem("province", province);
-    }, [province]);
+    async function detect() {
+        setLocStatus("idle");
 
-    useEffect(() => {
-        // Auto detect on load (best effort)
         if (!navigator.geolocation) {
             setLocStatus("error");
             return;
         }
-        setLocStatus("idle");
+
         navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude } = pos.coords;
-                setCoords({ latitude, longitude });
-                const p = guessProvince(latitude, longitude);
-                setProvince(p);
-                setLocStatus("ok");
+            async (pos) => {
+                try {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    setCoords({ lat, lon });
+
+                    // cache coords
+                    localStorage.setItem("dc_lat", String(lat));
+                    localStorage.setItem("dc_lon", String(lon));
+
+                    // reverse geocode (best-effort)
+                    const { display, state } = await reverseGeocode(lat, lon);
+                    const found = matchProvince(state) || matchProvince(display) || "";
+                    if (found) {
+                        setProvince(found);
+                        localStorage.setItem("dc_province", found);
+                    }
+                    setLocStatus("ok");
+                } catch {
+                    setLocStatus("error");
+                }
             },
             (err) => {
-                if (err?.code === 1) setLocStatus("denied");
-                else setLocStatus("error");
+                // denied, timeout, etc.
+                setLocStatus(err?.code === 1 ? "denied" : "error");
             },
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 }
+            { enableHighAccuracy: true, timeout: 9000, maximumAge: 30000 }
         );
+    }
+
+    useEffect(() => {
+        // auto-detect once on load
+        detect();
+      
     }, []);
 
     const value = useMemo(
         () => ({
-            province,
-            provinceLabel: province,
-            setProvince,
-            pickerOpen,
-            openPicker: () => setPickerOpen(true),
-            closePicker: () => setPickerOpen(false),
-            locStatus,
             coords,
-            provinces: PROVINCES,
+            province,
+            locStatus,
+            detectLocation: detect,
         }),
-        [province, pickerOpen, locStatus, coords]
+        [coords, province, locStatus]
     );
 
-    return (
-        <ProvinceContext.Provider value={value}>
-            {children}
-
-            {/* Picker modal */}
-            {pickerOpen && (
-                <div className="z-[60] fixed inset-0 flex items-end justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-black/70"
-                        onClick={() => setPickerOpen(false)}
-                    />
-                    <div className="glass relative w-full max-w-md rounded-3xl p-4">
-                        <div className="mb-3 flex items-center justify-between">
-                            <div className="font-semibold">Select Province</div>
-                            <button className="btn px-3 py-2 text-xs" onClick={() => setPickerOpen(false)}>
-                                Close
-                            </button>
-                        </div>
-
-                        <div className="mb-3 text-xs text-white/70">
-                            Auto-detect: {locStatus === "ok" ? "On" : locStatus === "denied" ? "Blocked" : locStatus}
-                        </div>
-
-                        <div className="max-h-[55vh] overflow-auto rounded-2xl border border-white/10">
-                            {PROVINCES.map((p) => (
-                                <button
-                                    key={p}
-                                    onClick={() => {
-                                        setProvince(p);
-                                        setPickerOpen(false);
-                                    }}
-                                    className={[
-                                        "w-full text-left px-4 py-3 text-sm",
-                                        "border-b border-white/5 last:border-b-0",
-                                        p === province ? "bg-white/10 text-white" : "text-white/85 hover:bg-white/5",
-                                    ].join(" ")}
-                                >
-                                    {p}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </ProvinceContext.Provider>
-    );
+    return <ProvinceContext.Provider value={value}>{children}</ProvinceContext.Provider>;
 }
 
 export function useProvince() {

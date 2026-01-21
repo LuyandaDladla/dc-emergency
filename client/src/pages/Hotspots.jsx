@@ -1,56 +1,106 @@
-﻿// client/src/pages/Hotspots.jsx
-import React, { useMemo, useState } from "react";
-import { AlertTriangle, MapPin } from "lucide-react";
+﻿import React, { useEffect, useMemo, useState } from "react";
+import { tryGet, tryPost } from "../services/api";
+import { useLiveLocation } from "../hooks/useLiveLocation";
+
+function distMeters(a, b) {
+    const R = 6371000;
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+    const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const sa = Math.sin(dLat / 2) ** 2 +
+        Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(sa));
+}
 
 export default function Hotspots() {
-    const [mode, setMode] = useState("nearby"); // nearby|national
+    const [hotspots, setHotspots] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { coords, province } = useLiveLocation();
 
-    const items = useMemo(
-        () => [
-            { name: "CBD Corridor", level: "High", note: "Reported incidents increased (demo)." },
-            { name: "Taxi Rank Zone", level: "Medium", note: "Stay alert and share location (demo)." },
-            { name: "Park & Footbridge", level: "High", note: "Avoid at night (demo)." },
-        ],
-        []
-    );
+    async function load() {
+        setLoading(true);
+        try {
+            const res = await tryGet("/hotspots");
+            setHotspots(res?.hotspots || []);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => { load(); }, []);
+
+    const nearby = useMemo(() => {
+        if (!coords) return [];
+        return hotspots
+            .map((h) => ({
+                ...h,
+                distance: distMeters(coords, { lat: h.lat, lng: h.lng }),
+            }))
+            .filter((h) => h.distance <= (h.radiusMeters || 500))
+            .sort((a, b) => a.distance - b.distance);
+    }, [coords, hotspots]);
 
     return (
-        <div className="space-y-4">
-            <div className="glass rounded-3xl p-4">
-                <div className="text-lg font-semibold">Hotspots</div>
-                <div className="mt-1 text-sm text-white/70">
-                    Demo hotspot awareness. Phase 3 adds geofencing + push alerts.
+        <div className="px-4 pb-24 pt-4">
+            <div className="rounded-3xl border border-white/10 bg-black/70 p-4 backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="text-lg font-semibold text-white">Hotspots</div>
+                        <div className="text-sm text-white/60">
+                            {province ? `Detected province: ${province}` : "Detecting province…"}
+                        </div>
+                    </div>
+                    <button
+                        className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white"
+                        onClick={load}
+                    >
+                        Refresh
+                    </button>
                 </div>
 
-                <div className="mt-3 flex gap-2">
+                {nearby.length > 0 && (
+                    <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3">
+                        <div className="font-semibold text-red-200">Nearby alert</div>
+                        <div className="text-sm text-red-200/80">
+                            You are inside {nearby.length} hotspot zone(s).
+                        </div>
+                    </div>
+                )}
+
+                <div className="mt-4 flex gap-2">
                     <button
-                        onClick={() => setMode("nearby")}
-                        className={["px-3 py-2 rounded-2xl text-sm", mode === "nearby" ? "bg-white/12" : "bg-white/6 hover:bg-white/10"].join(" ")}
+                        className="flex-1 rounded-2xl bg-white px-3 py-3 font-semibold text-black"
+                        onClick={async () => {
+                            await tryPost("/hotspots/seed", {});
+                            await load();
+                        }}
                     >
-                        Nearby
-                    </button>
-                    <button
-                        onClick={() => setMode("national")}
-                        className={["px-3 py-2 rounded-2xl text-sm", mode === "national" ? "bg-white/12" : "bg-white/6 hover:bg-white/10"].join(" ")}
-                    >
-                        National
+                        Seed demo hotspots
                     </button>
                 </div>
             </div>
 
-            <div className="space-y-3">
-                {items.map((h) => (
-                    <div key={h.name} className="glass rounded-3xl p-4">
+            <div className="mt-4 space-y-3">
+                {loading && (
+                    <div className="text-sm text-white/60">Loading…</div>
+                )}
+                {!loading && hotspots.length === 0 && (
+                    <div className="text-sm text-white/60">No hotspots yet. Tap “Seed demo hotspots”.</div>
+                )}
+
+                {hotspots.map((h) => (
+                    <div key={h._id} className="rounded-3xl border border-white/10 bg-black/60 p-4 backdrop-blur-xl">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 font-semibold">
-                                <MapPin size={16} className="opacity-80" /> {h.name}
-                            </div>
-                            <div className="flex items-center gap-1 text-xs">
-                                <AlertTriangle size={14} className="opacity-80" />
-                                <span className={h.level === "High" ? "text-red-300" : "text-amber-200"}>{h.level}</span>
-                            </div>
+                            <div className="font-semibold text-white">{h.name}</div>
+                            <div className="text-xs text-white/60">{h.province || "—"}</div>
                         </div>
-                        <div className="mt-1 text-xs text-white/70">{h.note}</div>
+                        <div className="mt-1 text-sm text-white/60">
+                            Radius: {h.radiusMeters || 500}m · Risk: {h.riskLevel}
+                        </div>
+                        {coords && (
+                            <div className="mt-1 text-xs text-white/50">
+                                Distance approx: {Math.round(distMeters(coords, { lat: h.lat, lng: h.lng }))}m
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

@@ -2,62 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Premium black base */
 :root {
     color-scheme: dark;
 }
 
-html, body, #root {
+html, body {
     height: 100%;
+    background: #0b0b0e;
 }
 
 body {
     margin: 0;
-    background: #05060a;
-    color: rgba(255,255,255,0.92);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "SF Pro Text", Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-
-.bg-premium {
-    background: radial-gradient(900px 600px at 20% 10%, rgba(255, 70, 180, 0.10), transparent 60%), radial-gradient(900px 600px at 80% 20%, rgba(80, 160, 255, 0.10), transparent 60%), radial-gradient(900px 600px at 40% 90%, rgba(255, 60, 60, 0.10), transparent 60%), linear-gradient(180deg, #04050a 0%, #03040a 60%, #020308 100%);
+.bg-app {
+    background: radial-gradient(900px 500px at 20% 10%, rgba(255,255,255,0.06), transparent 55%), radial-gradient(900px 500px at 80% 0%, rgba(255,255,255,0.05), transparent 60%), radial-gradient(700px 420px at 60% 90%, rgba(255,0,80,0.08), transparent 55%), #0b0b0e;
 }
 
 .glass {
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.10);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 }
 
 .glass-strong {
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.12);
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
 
-/* Premium button feel */
+.sos-red {
+    background: radial-gradient(circle at 30% 30%, rgba(255,80,90,0.95), rgba(210,20,45,0.95) 55%, rgba(150,0,20,0.95) 100%);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 16px 40px rgba(255,0,40,0.22), 0 2px 0 rgba(255,255,255,0.08) inset;
+}
+
 .btn {
-    border-radius: 999px;
+    @apply rounded-2xl px-4 py-3 font-semibold;
+}
+
+.btn-primary {
+    @apply btn bg-white text-black;
+}
+
+.btn-ghost {
+    @apply btn bg-white/10 text-white;
     border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.95);
-    padding: 12px 16px;
-    transition: transform .08s ease, background .15s ease;
+}
+/* Demo-grade “iOS black + glass” helpers */
+.glass {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(14px);
 }
 
-    .btn:active {
-        transform: scale(0.98);
-    }
-
-/* SOS */
-.sos-ring {
-    box-shadow: 0 0 0 10px rgba(255, 55, 75, 0.10), 0 0 0 22px rgba(255, 55, 75, 0.06), 0 18px 60px rgba(255, 55, 75, 0.25);
+.glass-nav {
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(18px);
 }
 
+.sos-fab {
+    width: 58px;
+    height: 58px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    gap: 2px;
+    color: white;
+    background: radial-gradient(circle at 30% 30%, rgba(255,80,120,0.85), rgba(210,0,60,0.85));
+    border: 1px solid rgba(255,255,255,0.18);
+}
 
-* {
-    -webkit-tap-highlight-color: transparent;
+.sos-big {
+    width: 220px;
+    height: 220px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    gap: 6px;
+    color: white;
+    background: radial-gradient(circle at 30% 30%, rgba(255,90,110,0.92), rgba(200,0,55,0.92));
+    border: 1px solid rgba(255,255,255,0.18);
+}
+
+.sos-giant {
+    width: 260px;
+    height: 260px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    gap: 4px;
+    color: white;
+    background: radial-gradient(circle at 30% 30%, rgba(255,90,110,0.95), rgba(190,0,50,0.95));
+    border: 1px solid rgba(255,255,255,0.18);
 }

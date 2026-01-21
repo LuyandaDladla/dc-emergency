@@ -1,49 +1,38 @@
+const API_BASE = import.meta.env.VITE_API_BASE || "https://dc-emergency.onrender.com/api";
 
-
-const API_BASE =
-    import.meta.env.VITE_API_BASE || "https://dc-emergency.onrender.com/api";
-
-const TOKEN_KEY = "dc_token";
-
-export function getAuthToken() {
-    return localStorage.getItem(TOKEN_KEY);
-}
+let authToken = null;
 
 export function setAuthToken(token) {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    authToken = token || null;
+    if (authToken) localStorage.setItem("token", authToken);
+    else localStorage.removeItem("token");
+}
+
+export function getAuthToken() {
+    if (authToken) return authToken;
+    const t = localStorage.getItem("token");
+    authToken = t || null;
+    return authToken;
 }
 
 async function request(method, path, body) {
-    const token = getAuthToken();
     const headers = { "Content-Type": "application/json" };
-    if (token) headers.Authorization = `Bearer ${token}`;
+    const t = getAuthToken();
+    if (t) headers.Authorization = `Bearer ${t}`;
 
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(API_BASE + path, {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined,
-        // Keep this "omit" unless you are actually using cookie sessions.
-        credentials: "omit",
+        credentials: "include",
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        const msg = data?.error || data?.message || `HTTP ${res.status}`;
-        throw new Error(msg);
-    }
+    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
     return data;
 }
 
 export const tryGet = (path) => request("GET", path);
 export const tryPost = (path, body) => request("POST", path, body);
 
-const api = {
-    base: API_BASE,
-    getAuthToken,
-    setAuthToken,
-    tryGet,
-    tryPost,
-};
-
-export default api;
+export default { tryGet, tryPost, setAuthToken, getAuthToken };

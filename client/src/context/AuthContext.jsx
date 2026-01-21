@@ -1,78 +1,65 @@
-// client/src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import api, { setAuthToken, getAuthToken, tryGet, tryPost } from "../services/api";
+import api, { setAuthToken, getAuthToken, tryPost, tryGet } from "../services/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    const [token, setTokenState] = useState(getAuthToken());
+    const [token, setToken] = useState(getAuthToken());
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const setToken = (t) => {
-        setAuthToken(t);
-        setTokenState(t || null);
-    };
-
-    async function refreshMe() {
-        const t = getAuthToken();
+    async function loadMe(t) {
         if (!t) {
             setUser(null);
-            return null;
+            return;
         }
-        const res = await tryGet("/users/me");
-        setUser(res?.user || null);
-        return res?.user || null;
+        try {
+            const res = await tryGet("/users/me");
+            setUser(res?.user || null);
+        } catch {
+            setUser(null);
+            setAuthToken(null);
+            setToken(null);
+        }
     }
+
+    useEffect(() => {
+        const t = getAuthToken();
+        setAuthToken(t);
+        setToken(t);
+        loadMe(t).finally(() => setLoading(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     async function login(email, password) {
         const res = await tryPost("/auth/login", { email, password });
-        if (!res?.token) throw new Error("No token returned");
-        setToken(res.token);
-        await refreshMe();
-        return true;
+        if (res?.token) {
+            setAuthToken(res.token);
+            setToken(res.token);
+            await loadMe(res.token);
+        }
+        return res;
     }
 
-    async function register(name, email, password) {
-        // Your backend register is on /api/users/register
-        const res = await tryPost("/users/register", { name, email, password });
-        if (!res?.token) throw new Error("No token returned");
-        setToken(res.token);
-        await refreshMe();
-        return true;
+    async function register({ email, password, name }) {
+        // register lives under /users/register in your backend
+        const res = await tryPost("/users/register", { email, password, name });
+        if (res?.token) {
+            setAuthToken(res.token);
+            setToken(res.token);
+            await loadMe(res.token);
+        }
+        return res;
     }
 
     function logout() {
+        setAuthToken(null);
         setToken(null);
         setUser(null);
     }
 
-    useEffect(() => {
-        (async () => {
-            try {
-                if (getAuthToken()) await refreshMe();
-            } catch {
-                // token bad / expired
-                setToken(null);
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        })();
-        
-    }, []);
-
     const value = useMemo(
-        () => ({
-            token,
-            user,
-            loading,
-            login,
-            register,
-            logout,
-            refreshMe,
-            apiBase: api.base,
-        }),
+        () => ({ token, user, loading, login, register, logout }),
         [token, user, loading]
     );
 

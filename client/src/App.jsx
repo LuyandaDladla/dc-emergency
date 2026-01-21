@@ -1,28 +1,25 @@
-﻿// client/src/App.jsx
-import React from "react";
+﻿import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import AppShell from "./components/AppShell";
-
 import Home from "./pages/Home";
 import SOS from "./pages/SOS";
 import Community from "./pages/Community";
 import Hotspots from "./pages/Hotspots";
-
+import LiveChat from "./pages/LiveChat";
+import Risk from "./pages/Risk";
+import Profile from "./pages/Profile";
+import Therapist from "./pages/Therapist";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
-// Optional placeholders if you have them later:
-// import Profile from "./pages/Profile";
-// import Risk from "./pages/Risk";
+import { useAuth } from "./context/AuthContext";
 
-function Placeholder({ title }) {
-    return (
-        <div className="glass rounded-3xl p-4">
-            <div className="text-lg font-semibold">{title}</div>
-            <div className="mt-1 text-sm text-white/70">Coming in Phase 3.</div>
-        </div>
-    );
+function Protected({ children }) {
+    const { token, loading } = useAuth();
+    if (loading) return <div className="p-6 text-white/70">Loading…</div>;
+    if (!token) return <Navigate to="/login" replace />;
+    return children;
 }
 
 export default function App() {
@@ -33,17 +30,21 @@ export default function App() {
                 <Route path="/sos" element={<SOS />} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/hotspots" element={<Hotspots />} />
-                <Route path="/chat" element={<Placeholder title="Live Chat (demo)" />} />
-                <Route path="/profile" element={<Placeholder title="Profile" />} />
+                <Route path="/chat" element={<LiveChat />} />
+                <Route path="/risk" element={<Risk />} />
+                <Route path="/therapist" element={<Therapist />} />
+                <Route
+                    path="/profile"
+                    element={
+                        <Protected>
+                            <Profile />
+                        </Protected>
+                    }
+                />
             </Route>
 
-            {/* Auth screens (still use AppShell background, but BottomNav auto hides) */}
-            <Route element={<AppShell />}>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-            </Route>
-
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
         </Routes>
     );
 }
