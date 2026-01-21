@@ -100,3 +100,14 @@ body {
     background: radial-gradient(circle at 30% 30%, rgba(255,90,110,0.95), rgba(190,0,50,0.95));
     border: 1px solid rgba(255,255,255,0.18);
 }
+:root {
+    color-scheme: dark;
+}
+
+.bg-app {
+    background: radial-gradient(1200px 600px at 20% -10%, rgba(255,255,255,0.06), transparent 55%), radial-gradient(1000px 500px at 90% 10%, rgba(255,255,255,0.04), transparent 60%), #050507;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
