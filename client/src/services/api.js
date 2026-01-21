@@ -1,28 +1,30 @@
+
+
 const API_BASE =
     import.meta.env.VITE_API_BASE || "https://dc-emergency.onrender.com/api";
 
-let authToken = localStorage.getItem("token") || null;
-
-export function setAuthToken(token) {
-    authToken = token || null;
-    if (authToken) localStorage.setItem("token", authToken);
-    else localStorage.removeItem("token");
-}
+const TOKEN_KEY = "dc_token";
 
 export function getAuthToken() {
-    return authToken;
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setAuthToken(token) {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
 }
 
 async function request(method, path, body) {
+    const token = getAuthToken();
     const headers = { "Content-Type": "application/json" };
-    if (authToken) headers.Authorization = "Bearer " + authToken;
+    if (token) headers.Authorization = `Bearer ${token}`;
 
-    const res = await fetch(API_BASE + path, {
+    const res = await fetch(`${API_BASE}${path}`, {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined,
-        // keep this true
-        credentials: "include"
+        // Keep this "omit" unless you are actually using cookie sessions.
+        credentials: "omit",
     });
 
     const data = await res.json().catch(() => ({}));
@@ -36,10 +38,12 @@ async function request(method, path, body) {
 export const tryGet = (path) => request("GET", path);
 export const tryPost = (path, body) => request("POST", path, body);
 
-// nice default wrapper for old code
-export default {
+const api = {
+    base: API_BASE,
+    getAuthToken,
+    setAuthToken,
     tryGet,
     tryPost,
-    setAuthToken,
-    getAuthToken
 };
+
+export default api;

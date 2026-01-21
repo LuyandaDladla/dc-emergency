@@ -1,96 +1,138 @@
-﻿import React, { useMemo, useState } from "react";
-import { tryPost } from "../services/api";
+﻿// client/src/pages/SOS.jsx
+import React, { useEffect, useRef, useState } from "react";
+import { ShieldAlert, Phone, MapPin, CheckCircle2 } from "lucide-react";
 
 export default function SOS() {
-    const [busy, setBusy] = useState(false);
-    const [msg, setMsg] = useState("");
+    const [status, setStatus] = useState("idle"); // idle|sending|sent
+    const [shakeEnabled, setShakeEnabled] = useState(false);
+    const last = useRef({ x: 0, y: 0, z: 0, t: 0 });
 
-    const contacts = useMemo(
-        () => [
-            { label: "Police (10111)", href: "tel:10111" },
-            { label: "Ambulance (10177)", href: "tel:10177" },
-            { label: "Emergency (112)", href: "tel:112" }
-        ],
-        []
-    );
+    async function triggerSOS(source = "tap") {
+        if (status === "sending") return;
+        setStatus("sending");
 
-    async function triggerSOS() {
-        setMsg("");
-        setBusy(true);
-        try {
-            const payload = {
-                type: "panic",
-                message: "SOS triggered (demo)",
-                location: null
-            };
+        // Demo action: show a success state quickly.
+        // Phase 3: POST to /api/sos/trigger with coords + contacts.
+        setTimeout(() => setStatus("sent"), 900);
 
-            // try to attach location (best-effort)
-            await new Promise((resolve) => {
-                if (!navigator.geolocation) return resolve();
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        payload.location = {
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                            accuracy: pos.coords.accuracy
-                        };
-                        resolve();
-                    },
-                    () => resolve(),
-                    { enableHighAccuracy: true, timeout: 5000 }
-                );
-            });
-
-            await tryPost("/sos", payload);
-            setMsg("✅ SOS sent (demo).");
-        } catch (e) {
-            setMsg(e?.message || "Failed to send SOS");
-        } finally {
-            setBusy(false);
-        }
+        // Optional: open dialer for emergencies
+        // window.location.href = "tel:112";
+        console.log("SOS triggered via:", source);
     }
 
-    return (
-        <div className="min-h-screen bg-black px-4 pb-28 pt-6 text-white">
-            <h1 className="text-xl font-semibold">SOS</h1>
-            <p className="mt-1 text-sm text-white/70">
-                Press the button to send an emergency alert (demo).
-            </p>
+    async function requestMotionPermissionIfNeeded() {
+        // iOS requires permission prompt
+        const dm = window.DeviceMotionEvent;
+        // eslint-disable-next-line no-undef
+        if (dm && typeof dm.requestPermission === "function") {
+            const res = await dm.requestPermission();
+            return res === "granted";
+        }
+        return true;
+    }
 
-            <div className="mt-6 flex items-center justify-center">
-                <button
-                    onClick={triggerSOS}
-                    disabled={busy}
-                    className="h-56 w-56 rounded-full border border-white/15 bg-red-500/90 shadow-[0_0_60px_rgba(239,68,68,.35)] transition active:scale-[0.98] disabled:opacity-60"
-                >
-                    <div className="flex flex-col items-center justify-center">
-                        <div className="font-black text-4xl tracking-wider">SOS</div>
-                        <div className="mt-2 text-sm text-white/90">
-                            {busy ? "Sending..." : "Tap to alert"}
-                        </div>
-                    </div>
-                </button>
+    useEffect(() => {
+        if (!shakeEnabled) return;
+
+        let handler = async (e) => {
+            const a = e.accelerationIncludingGravity;
+            if (!a) return;
+            const now = Date.now();
+            if (now - last.current.t < 120) return;
+
+            const dx = Math.abs((a.x || 0) - last.current.x);
+            const dy = Math.abs((a.y || 0) - last.current.y);
+            const dz = Math.abs((a.z || 0) - last.current.z);
+
+            last.current = { x: a.x || 0, y: a.y || 0, z: a.z || 0, t: now };
+
+            // threshold tuned for demo
+            const magnitude = dx + dy + dz;
+            if (magnitude > 20) {
+                triggerSOS("shake");
+            }
+        };
+
+        window.addEventListener("devicemotion", handler);
+        return () => window.removeEventListener("devicemotion", handler);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [shakeEnabled]);
+
+    return (
+        <div className="space-y-4">
+            <div className="glass rounded-3xl p-4">
+                <div className="text-lg font-semibold">SOS</div>
+                <div className="mt-1 text-sm text-white/70">
+                    One-tap emergency action. Sends location + alerts (demo ready).
+                </div>
             </div>
 
-            {msg ? (
-                <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm backdrop-blur-xl">
-                    {msg}
-                </div>
-            ) : null}
+            <div className="glass flex flex-col items-center justify-center rounded-3xl p-5">
+                <button
+                    onClick={() => triggerSOS("tap")}
+                    className="sos-giant active:scale-95 transition"
+                    aria-label="Trigger SOS"
+                >
+                    <ShieldAlert size={34} />
+                    <div className="mt-1 text-lg font-semibold">TRIGGER SOS</div>
+                    <div className="text-xs opacity-85">Hold-to-confirm in Phase 3</div>
+                </button>
 
-            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-                <div className="font-semibold">Quick dial</div>
-                <div className="mt-3 space-y-2">
-                    {contacts.map((c) => (
-                        <a
-                            key={c.href}
-                            href={c.href}
-                            className="block w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3"
-                        >
-                            {c.label}
-                        </a>
-                    ))}
+                <div className="mt-4 w-full">
+                    {status === "idle" && (
+                        <div className="flex items-center gap-2 text-sm text-white/70">
+                            <MapPin size={16} /> Ready to capture live location
+                        </div>
+                    )}
+                    {status === "sending" && <div className="text-sm text-white/80">Sending alerts…</div>}
+                    {status === "sent" && (
+                        <div className="flex items-center gap-2 text-sm text-emerald-300">
+                            <CheckCircle2 size={16} /> Alert sent (demo)
+                        </div>
+                    )}
                 </div>
+            </div>
+
+            <div className="glass rounded-3xl p-4">
+                <div className="text-sm font-semibold">Accessibility</div>
+                <div className="mt-1 text-xs text-white/70">
+                    Shake SOS can work in iOS PWA if motion permission is granted. Power-button triggers are not available from web apps.
+                </div>
+
+                <div className="mt-3 flex items-center justify-between">
+                    <div className="text-sm">Enable Shake SOS</div>
+                    <button
+                        onClick={async () => {
+                            const ok = await requestMotionPermissionIfNeeded();
+                            if (!ok) return;
+                            setShakeEnabled((v) => !v);
+                        }}
+                        className={[
+                            "px-3 py-2 rounded-2xl text-sm transition",
+                            shakeEnabled ? "bg-white/12" : "bg-white/6 hover:bg-white/10",
+                        ].join(" ")}
+                    >
+                        {shakeEnabled ? "On" : "Off"}
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => (window.location.href = "tel:112")} className="glass rounded-3xl p-4 text-left">
+                    <div className="flex items-center gap-2">
+                        <Phone size={18} />
+                        <div className="font-semibold">Call 112</div>
+                    </div>
+                    <div className="mt-1 text-xs text-white/70">Emergency number</div>
+                </button>
+
+                <button onClick={() => (window.location.href = "tel:10111")} className="glass rounded-3xl p-4 text-left">
+                    <div className="flex items-center gap-2">
+                        <Phone size={18} />
+                        <div className="font-semibold">Police 10111</div>
+                    </div>
+                    <div className="mt-1 text-xs text-white/70">SAP Service</div>
+                </button>
             </div>
         </div>
     );

@@ -1,61 +1,65 @@
+// client/src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import api, { setAuthToken, getAuthToken, tryGet, tryPost } from "../services/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    const [token, setToken] = useState(() => getAuthToken());
+    const [token, setTokenState] = useState(getAuthToken());
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    async function refreshMe(tk = token) {
-        if (!tk) {
+    const setToken = (t) => {
+        setAuthToken(t);
+        setTokenState(t || null);
+    };
+
+    async function refreshMe() {
+        const t = getAuthToken();
+        if (!t) {
             setUser(null);
-            setLoading(false);
-            return;
+            return null;
         }
-        try {
-            setAuthToken(tk);
-            const res = await tryGet("/users/me");
-            setUser(res?.user || null);
-        } catch {
-            setUser(null);
-        } finally {
-            setLoading(false);
-        }
+        const res = await tryGet("/users/me");
+        setUser(res?.user || null);
+        return res?.user || null;
     }
 
     async function login(email, password) {
         const res = await tryPost("/auth/login", { email, password });
-        const tk = res?.token;
-        if (!tk) throw new Error("No token returned");
-        setAuthToken(tk);
-        setToken(tk);
-        await refreshMe(tk);
+        if (!res?.token) throw new Error("No token returned");
+        setToken(res.token);
+        await refreshMe();
         return true;
     }
 
     async function register(name, email, password) {
-        // register is under /users/register in your backend
+        // Your backend register is on /api/users/register
         const res = await tryPost("/users/register", { name, email, password });
-        const tk = res?.token;
-        if (tk) {
-            setAuthToken(tk);
-            setToken(tk);
-            await refreshMe(tk);
-        }
+        if (!res?.token) throw new Error("No token returned");
+        setToken(res.token);
+        await refreshMe();
         return true;
     }
 
     function logout() {
-        setAuthToken(null);
         setToken(null);
         setUser(null);
     }
 
     useEffect(() => {
-        refreshMe(token);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        (async () => {
+            try {
+                if (getAuthToken()) await refreshMe();
+            } catch {
+                // token bad / expired
+                setToken(null);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        })();
+        
     }, []);
 
     const value = useMemo(
@@ -65,7 +69,9 @@ export function AuthProvider({ children }) {
             loading,
             login,
             register,
-            logout
+            logout,
+            refreshMe,
+            apiBase: api.base,
         }),
         [token, user, loading]
     );

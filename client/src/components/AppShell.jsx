@@ -1,60 +1,40 @@
-﻿import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+﻿// client/src/components/AppShell.jsx
+import React from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
-import { useProvince } from "../context/ProvinceContext";
+import { ShieldAlert } from "lucide-react";
 
-export default function AppShell({ children }) {
+export default function AppShell() {
     const nav = useNavigate();
     const loc = useLocation();
-    const { provinceLabel, openPicker, locStatus } = useProvince();
-
-    const showChrome = !["/login", "/register"].includes(loc.pathname);
+    const hideNav = ["/login", "/register"].includes(loc.pathname);
 
     return (
-        <div className="bg-premium min-h-screen">
-            <div className="mx-auto min-h-screen max-w-md px-4 pb-28 pt-4">
-                {showChrome && (
-                    <header className="glass flex items-center justify-between rounded-3xl px-4 py-3">
-                        <div className="font-semibold tracking-tight">DC Emergency</div>
+        <div className="min-h-screen bg-black text-white">
+            {/* subtle background */}
+            <div className="bg-[radial-gradient(1200px_700px_at_50%_-10%,rgba(255,255,255,0.12),transparent_60%)] pointer-events-none fixed inset-0" />
+            <div className="bg-[radial-gradient(900px_500px_at_10%_10%,rgba(255,0,80,0.10),transparent_55%)] pointer-events-none fixed inset-0" />
+            <div className="bg-[radial-gradient(900px_500px_at_90%_25%,rgba(0,180,255,0.10),transparent_55%)] pointer-events-none fixed inset-0" />
 
-                        <button
-                            className="btn px-3 py-2 text-xs"
-                            onClick={openPicker}
-                            title="Change province"
-                        >
-                            {locStatus === "idle" ? "Detecting…" : provinceLabel}
-                        </button>
-                    </header>
-                )}
-
-                <main className="pt-5">{children}</main>
+            <div className="relative mx-auto max-w-md px-4 pb-24 pt-5">
+                <Outlet />
             </div>
 
-            {showChrome && (
-                <>
-                    {/* Floating SOS always accessible */}
-                    <button
-                        onClick={() => nav("/sos")}
-                        className="fixed right-5 z-50 sos-ring"
-                        style={{
-                            bottom: "calc(88px + env(safe-area-inset-bottom))",
-                            width: 74,
-                            height: 74,
-                            borderRadius: 999,
-                            background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.35), transparent 55%), #ff2f45",
-                            border: "1px solid rgba(255,255,255,0.18)",
-                            color: "white",
-                        }}
-                    >
-                        <div className="flex flex-col items-center justify-center leading-none">
-                            <div className="text-lg font-extrabold">SOS</div>
-                            <div className="text-[10px] opacity-90">Emergency</div>
-                        </div>
-                    </button>
-
-                    <BottomNav />
-                </>
+            {/* Floating SOS - always accessible */}
+            {!hideNav && (
+                <button
+                    onClick={() => nav("/sos")}
+                    className="fixed z-50 right-5 bottom-24 active:scale-95 transition"
+                    aria-label="Open SOS"
+                >
+                    <div className="sos-fab shadow-2xl">
+                        <ShieldAlert size={20} />
+                        <span className="text-xs font-semibold">SOS</span>
+                    </div>
+                </button>
             )}
+
+            {!hideNav && <BottomNav />}
         </div>
     );
 }
